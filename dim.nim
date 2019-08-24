@@ -46,7 +46,7 @@ var level:float = 5
 if paramCount() == 0:
   let hour = now().hour
 
-  if hour > 8 and hour <= 18:
+  if hour >= 7 and hour <= 18:
     level = 6
   elif hour > 18 and hour <= 20:
     level = 3
