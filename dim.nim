@@ -26,10 +26,6 @@ proc system(cmd: string) =
   discard execShellCmd(&"{cmd} > /dev/null")
 
 
-proc reset_redshift() =
-  system "redshift -x"
-
-
 proc set_light(level: int) =
   assert(level >= 0 and level <= 100)
   system fmt"light -S {level}"
@@ -42,12 +38,11 @@ proc print_usage() =
 
 proc set_redshift(temp: int, dim: int) =
   let dim_f = float(dim) / 100.0
-  reset_redshift()
-  system fmt"redshift -O {temp} -b {dim_f}"
+  system fmt"redshift -P -O {temp} -b {dim_f}"
 
 
 if paramCount() == 0:
-  reset_redshift()
+  set_redshift(4500, 100)
   set_light(50)
 
 elif paramCount() == 1:
