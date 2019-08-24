@@ -1,4 +1,4 @@
-import os, strutils, streams, parseutils, system, strformat, math
+import os, strutils, streams, parseutils, system, strformat, math, times
 
 const MAX_LEVEL = 10
 const LIGHT = [   1,    1,    5,    5,   10,   25,   50,  100,  100]
@@ -41,12 +41,19 @@ proc set_redshift(temp: int, dim: int) =
   system fmt"redshift -P -O {temp} -b {dim_f}"
 
 
+var level:float = 5
+
 if paramCount() == 0:
-  set_redshift(4500, 100)
-  set_light(50)
+  let hour = now().hour
+
+  if hour > 8 and hour <= 18:
+    level = 6
+  elif hour > 18 and hour <= 20:
+    level = 3
+  else:
+    level = 1
 
 elif paramCount() == 1:
-  var level: float
   let res = parsefloat(paramStr(1), level)
 
   if res == 0:
@@ -57,9 +64,10 @@ elif paramCount() == 1:
     print_usage()
     quit(QuitFailure)
 
-  let light = get_value_for_level(LIGHT, level)
-  let temp = get_value_for_level(TEMP, level)
-  let dim = get_value_for_level(DIM, level)
 
-  set_redshift(temp, dim)
-  set_light(light)
+let light = get_value_for_level(LIGHT, level)
+let temp = get_value_for_level(TEMP, level)
+let dim = get_value_for_level(DIM, level)
+
+set_redshift(temp, dim)
+set_light(light)
