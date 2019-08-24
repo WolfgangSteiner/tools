@@ -1,9 +1,9 @@
 import os, strutils, streams, parseutils, system, strformat, math
 
 const MAX_LEVEL = 10
-const LIGHT = [   1,    1,    1,    1,    5,    5,   10,   25,   50,  100,  100]
-const TEMP =  [1500, 1500, 1500, 1500, 2000, 3000, 4000, 4500, 5500, 5500, 6500]
-const DIM =   [   0,   50,   75,  100]
+const LIGHT = [   1,    1,    5,    5,   10,   25,   50,  100,  100]
+const TEMP =  [1500, 1500, 1500, 2000, 3000, 4000, 4500, 5000, 5500, 6500]
+const DIM =   [   0,  100]
 
 
 proc get_value_for_level(arr: openArray[int], level: float): int =
@@ -11,6 +11,8 @@ proc get_value_for_level(arr: openArray[int], level: float): int =
   if floor(level) == level:
     let idx = min(len(arr) - 1, int(level))
     return arr[idx]
+  elif level > float(len(arr)):
+    return high(arr)
   else:
     let idx1 = min(len(arr) - 1, int(floor(level)))
     let idx2 = min(len(arr) - 1, int(ceil(level)))
