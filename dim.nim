@@ -2,7 +2,7 @@ import os, strutils, streams, parseutils, system, strformat, math, times
 
 const MAX_LEVEL = 10
 const LIGHT = [   1,    1,    5,    5,   10,   25,   50,  100,  100]
-const TEMP =  [1500, 1500, 1500, 2000, 3000, 4000, 4500, 5000, 5500, 6500]
+const TEMP =  [1000, 1500, 1500, 2000, 3000, 4000, 4500, 5000, 5500, 6500]
 const DIM =   [   0,  100]
 
 
