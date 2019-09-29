@@ -192,6 +192,12 @@ proc check_id_argument(cmd: string, ids: seq[string]) =
     quit()
 
 
+proc check(condition: bool, message: string) =
+  if not condition:
+    echo message
+    quit()
+
+
 proc is_valid_id(id: string) : bool =
   return matchLen(id, re"[0-9a-f]+") == len(id)
 
@@ -240,7 +246,7 @@ if len(cmd_seq) == 0:
 
 case cmd:
   of "create":
-    doAssert(len(title) > 0, "Please provide a title for the new todo item")
+    check(len(title) > 0, "Please provide a title for the new todo item.")
     create_item(title=title, priority=priority, description=description)
   of "list":
     list_items(ids, only_open=only_open)
