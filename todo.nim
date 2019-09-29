@@ -54,7 +54,7 @@ date: {item.date}  priority: {item.priority}  status: {item.status}  tags: {item
 {item.description}
 """
 
-func format_message(item: TodoItem) : string = "{item.shortId}: \"{item.title}\""
+func format_message(item: TodoItem) : string = &"{item.shortId}: \"{item.title}\""
 
 
 proc todo_item(title="", description="", tags="", priority=0.0) : TodoItem =
