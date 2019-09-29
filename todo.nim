@@ -9,15 +9,73 @@ import strformat
 import terminal
 import times
 
+################################################################################
+## GLOBALS
+################################################################################
 const TODO_DIR : string = ".todo"
-let TERM_WIDTH = terminalWidth()
+let TERM_WIDTH : int = terminalWidth()
+
+
+################################################################################
+## GIT
+################################################################################
+proc gitHasRepository() : bool =
+  for l in execProcess("git status --porcelain").splitLines():
+    if l.match(re"^fatal: not a git repository"):
+      return false
+  return true
+
+proc assertGitRepository() = doAssert(gitHasRepository(), "No git respository found.")
+
+proc gitAdd(path:string) =
+  assertGitRepository()
+  discard execCmd(&"git add {path}")
+
+proc gitCommit(msg:string) =
+  assertGitRepository()
+  discard execCmd(&"git commit -m \"{msg}\"")
+
+proc gitHasStagedFiles() : bool =
+  assertGitRepository()
+  for l in execProcess("git status --porcelain").splitLines():
+    if l.match(re"^[AM]"):
+      return true
+  return false
+
+proc gitInit() =
+  discard execCmd("git init")
+
+
+################################################################################
+## PRETTY PRINTNG
+################################################################################
+func separator(char='-', width=TERM_WIDTH) : string = "#" & char.repeat(width-1) & "\n"
+func separator1(width=TERM_WIDTH) : string = separator('#', width=width)
+func separator2(width=TERM_WIDTH) : string = separator('=', width=width)
+func separator3(width=TERM_WIDTH) : string = separator('-', width=width)
+
+func format_header(s: string, char='-', width=TERM_WIDTH) : string =
+  separator(char, width) & "# " & s & "\n" & separator(char, width)
 
 
 proc write_help() =
   echo "todo [new|list|done]"
   quit()
 
-var p = initOptParser("")
+
+################################################################################
+## ERROR HANDLING
+################################################################################
+proc check(condition: bool, message: string) =
+  if not condition:
+    echo message
+    quit()
+
+proc check_false(condition: bool, message: string) =
+  if condition:
+    echo message
+    quit()
+
 
 proc generate_id() : string = ($genUUID()).replace("-","")[0..<16]
 proc current_date() : string = now().format("yyyy-MM-dd")
@@ -145,21 +203,25 @@ proc item_for_id(id: string) : TodoItem =
     quit()
 
 
-proc resolve_item(id: string) =
-  var item = item_for_id(id)
-  if item.status == tsOpen:
-    echo &"Resolved {item.format_message}."
-    item.status = tsResolved
-    item.write()
-  else:
-    echo &"Already resolved {item.format_message}."
-
-
 proc filename_for_id(id: string) : string =
   discard item_for_id(id)
   let files = toSeq(walkFiles(join_path(TODO_DIR, &"{id}*.todo")))
   doAssert(len(files) == 1)
   return files[0]
+
+
+proc resolve_item(id:string, commit:bool=false) =
+  var item = item_for_id(id)
+  if item.status == tsOpen:
+    item.status = tsResolved
+    item.write()
+    if commit:
+      check(gitHasStagedFiles(), "Please stage files before trying to resolve --commit.")
+      gitAdd(filename_for_id(id))
+      gitCommit(&"Resolved {item.shortId}: {item.title}")
+    echo &"Resolved {item.format_message}."
+  else:
+    echo &"Already resolved {item.format_message}."
 
 
 proc create_item(title: string, description="", priority = 0.0) =
@@ -192,11 +254,6 @@ proc check_id_argument(cmd: string, ids: seq[string]) =
     quit()
 
 
-proc check(condition: bool, message: string) =
-  if not condition:
-    echo message
-    quit()
-
 
 proc is_valid_id(id: string) : bool =
   return matchLen(id, re"[0-9a-f]+") == len(id)
@@ -211,6 +268,9 @@ var priority = 0.0
 var only_open = true
 var cmd : string = "list"
 var ids : seq[string]
+var commit : bool = false
+
+var p = initOptParser("")
 
 for kind, key, val in p.getopt():
   case kind:
@@ -234,6 +294,9 @@ for kind, key, val in p.getopt():
         of "title", "t": title = val
         of "priority", "p": priority = parseFloat(val)
         of "description", "d": description = val
+        of "commit",:
+          check_cmd(cmd, @["resolve"], "commit")
+          commit = true
         of "all", "a":
           check_cmd(cmd, @["list"], "all")
           only_open = false
@@ -252,8 +315,9 @@ case cmd:
     list_items(ids, only_open=only_open)
   of "resolve":
     check_id_argument("resolve", ids)
+    check_false(commit and len(ids) > 1, "Only one id allowed for option --commit.")
     for id in ids:
-      resolve_item(id)
+      resolve_item(id, commit=commit)
   of "edit", "e":
     check_id_argument("edit", ids)
     for id in ids:
