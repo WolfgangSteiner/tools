@@ -12,13 +12,14 @@ import times
 const TODO_DIR : string = ".todo"
 let TERM_WIDTH = terminalWidth()
 
+
 proc write_help() =
   echo "todo [new|list|done]"
   quit()
 
 var p = initOptParser("")
 
-proc generate_id() : string = $genUUID()
+proc generate_id() : string = ($genUUID()).replace("-","")[0..<16]
 proc current_date() : string = now().format("yyyy-MM-dd")
 
 type TodoStatus = enum tsOpen = "open", tsResolved = "resolved"
@@ -33,7 +34,7 @@ type TodoItem = object
   description*: string
 
 
-func shortId(item: TodoItem) : string = return item.id.split("-")[0]
+func shortId(item: TodoItem) : string = return item.id[0..<7]
 func format_short(item: TodoItem) : string = &"{item.shortId}  {item.title}"
 
 
@@ -161,6 +162,12 @@ proc filename_for_id(id: string) : string =
   return files[0]
 
 
+proc create_item(title: string, description="", priority = 0.0) =
+  var item = todo_item(title=title, priority=priority, description=description)
+  item.write()
+  echo &"Created item {item.format_message}"
+
+
 proc edit_item(id: string) =
   let fn = filename_for_id(id)
   discard execCmd(&"vim {fn}")
@@ -233,10 +240,8 @@ if len(cmd_seq) == 0:
 
 case cmd:
   of "create":
-    if len(cmd_seq) > 1:
-      title = cmd_seq[1]
-    var item = todo_item(title=title, priority=priority, description=description)
-    item.write()
+    doAssert(len(title) > 0, "Please provide a title for the new todo item")
+    create_item(title=title, priority=priority, description=description)
   of "list":
     list_items(ids, only_open=only_open)
   of "resolve":
