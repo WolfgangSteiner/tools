@@ -106,14 +106,22 @@ status: {item.status}
 {item.description}"""
 
 
-func format_verbose(item: TodoItem) : string =
-  return &"""{item.shortId}  {item.title}
-date: {item.date}  priority: {item.priority}  status: {item.status}  tags: {item.tags}
+proc format_verbose(item: TodoItem) : string =
+  var r = separator3()
+  r.add(&"# {item.shortId}  {item.title}\n")
+  r.add("#\n")
+  r.add(&"#          date:{item.date}  priority:{item.priority}  status:{item.status}  tags:{item.tags}\n")
+  r.add(separator3())
+  r.add(&"{item.description}")
+  return r
 
-{item.description}
-"""
 
 func format_message(item: TodoItem) : string = &"{item.shortId}: \"{item.title}\""
+proc format(item: TodoItem, verbose=false) : string =
+  if verbose:
+    item.format_verbose()
+  else:
+    item.format_short()
 
 
 proc todo_item(title="", description="", tags="", priority=0.0) : TodoItem =
@@ -171,11 +179,11 @@ proc load_all_items() : seq[TodoItem] =
   return r
 
 
-proc list_items(items: seq[TodoItem], only_open = true) =
+proc list_items(items: seq[TodoItem], only_open=true, verbose=false) =
   for item in items:
     if only_open and item.status != tsOpen:
       continue
-    echo item.format_short()
+    echo item.format(verbose=verbose)
 
 
 proc list_items(ids: seq[string], only_open = true) =
@@ -187,7 +195,7 @@ proc list_items(ids: seq[string], only_open = true) =
   if len(items) == 0:
     echo "No todos found."
   else:
-    list_items(items, only_open)
+    list_items(items, only_open, verbose=len(ids)>0)
 
 
 proc item_for_id(id: string) : TodoItem =
@@ -252,7 +260,6 @@ proc check_id_argument(cmd: string, ids: seq[string]) =
   if len(ids) < 1:
     echo &"You need to supply a valid id for command {cmd}"
     quit()
-
 
 
 proc is_valid_id(id: string) : bool =
