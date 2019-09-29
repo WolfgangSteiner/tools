@@ -3,16 +3,18 @@ import osproc
 import parseopt
 import sequtils
 import uuids
+import re
 import strutils
 import strformat
+import terminal
 import times
 
 const TODO_DIR : string = ".todo"
-
+let TERM_WIDTH = terminalWidth()
 
 proc write_help() =
   echo "todo [new|list|done]"
-  quit(QuitFailure)
+  quit()
 
 var p = initOptParser("")
 
@@ -30,6 +32,11 @@ type TodoItem = object
   status*: TodoStatus
   description*: string
 
+
+func shortId(item: TodoItem) : string = return item.id.split("-")[0]
+func format_short(item: TodoItem) : string = &"{item.shortId}  {item.title}"
+
+
 func `$`(item: TodoItem) : string =
   return &"""title: {item.title}
 date: {item.date}
@@ -39,11 +46,20 @@ status: {item.status}
 
 {item.description}"""
 
+
+func format_verbose(item: TodoItem) : string =
+  return &"""{item.shortId}  {item.title}
+date: {item.date}  priority: {item.priority}  status: {item.status}  tags: {item.tags}
+
+{item.description}
+"""
+
+func format_message(item: TodoItem) : string = "{item.shortId}: \"{item.title}\""
+
+
 proc todo_item(title="", description="", tags="", priority=0.0) : TodoItem =
   TodoItem(id:generate_id(), title:title, description:description, priority:priority, status:tsOpen, date:current_date(), tags:tags)
 
-func shortId(item: TodoItem) : string =
-    return item.id.split("-")[0]
 
 proc write(item: TodoItem) =
   create_dir(TODO_DIR)
@@ -74,50 +90,103 @@ proc read_item(fn: string) : TodoItem =
         echo &"Skipping file {fn}: unknown field {key}."
   return item
     
-  #for l in s.splitLines():
 
-proc list_items(files: seq[string], only_open = false) =
-  for fn in files:
-    let item = read_item(fn)
+proc items_for_id(id: string) : seq[TodoItem] =
+  var r: seq[TodoItem]
+  for fn in walkFiles(join_path(TODO_DIR, id & "*.todo")):
+    r.add(read_item(fn))
+  return r
+
+
+proc items_for_ids(ids: seq[string]) : seq[TodoItem] =
+  var r : seq[TodoItem]
+  for id in ids:
+    r.add(items_for_id(id))
+  return r
+
+
+proc load_all_items() : seq[TodoItem] =
+  var r : seq[TodoItem]
+  for fn in walkFiles(join_path(TODO_DIR, "*.todo")):
+    r.add(read_item(fn))
+  return r
+
+
+proc list_items(items: seq[TodoItem], only_open = true) =
+  for item in items:
     if only_open and item.status != tsOpen:
       continue
-    echo &"{item.shortId}  {item.title}"
+    echo item.format_short()
 
 
-proc list_items(only_open = true) =
-  let files = toSeq(walkFiles(join_path(TODO_DIR, "*.todo")))
-  if len(files) == 0:
+proc list_items(ids: seq[string], only_open = true) =
+  let items =
+    if len(ids) > 0:
+      items_for_ids(ids)
+    else:
+      load_all_items()
+  if len(items) == 0:
     echo "No todos found."
   else:
-    list_items(files, only_open)
+    list_items(items, only_open)
 
-proc filename_for_id(id: string) : string =
-  let files = toSeq(walkFiles(join_path(TODO_DIR, id & "*.todo")))
-  if len(files) == 0:
+
+proc item_for_id(id: string) : TodoItem =
+  let items = toSeq(items_for_id(id))
+  if len(items) == 0:
     echo &"Could not find any todos for id {id}."
     quit()
-  elif len(files) == 1:
-    return files[0]
+  elif len(items) == 1:
+    return items[0]
   else:
     echo &"More than one todo found for id {id}:"
-    list_items(files, only_open=false)
+    list_items(items, only_open=false)
     quit()
 
-
-proc item_for_id(id: string) : TodoItem = read_item(filename_for_id(id))
 
 proc resolve_item(id: string) =
   var item = item_for_id(id)
   if item.status == tsOpen:
-    echo &"Resolved {item.shortId}: \"{item.title}\""
+    echo &"Resolved {item.format_message}."
     item.status = tsResolved
     item.write()
   else:
-    echo &"Already resolved {item.shortId}: \"{item.title}\""
+    echo &"Already resolved {item.format_message}."
+
+
+proc filename_for_id(id: string) : string =
+  discard item_for_id(id)
+  let files = toSeq(walkFiles(join_path(TODO_DIR, &"{id}*.todo")))
+  doAssert(len(files) == 1)
+  return files[0]
+
 
 proc edit_item(id: string) =
   let fn = filename_for_id(id)
   discard execCmd(&"vim {fn}")
+
+
+proc delete_item(id: string) =
+  let fn = filename_for_id(id)
+  let item = item_for_id(id)
+  removeFile(fn)
+  echo &"Deleted item {item.format_message}." 
+
+
+proc check_cmd(command : string, legal_commands: seq[string], option: string) =
+  if not legal_commands.contains(command):
+    echo &"Invalid option {option} for command {command}"
+    quit()
+
+
+proc check_id_argument(cmd: string, ids: seq[string]) =
+  if len(ids) < 1:
+    echo &"You need to supply a valid id for command {cmd}"
+    quit()
+
+
+proc is_valid_id(id: string) : bool =
+  return matchLen(id, re"[0-9a-f]+") == len(id)
 
 
 ################################################################################
@@ -125,19 +194,36 @@ proc edit_item(id: string) =
 ################################################################################
 var cmd_seq : seq[string]
 var title, description : string
-var priority : float = 0.0
-
+var priority = 0.0
+var only_open = true
+var cmd : string = "list"
+var ids : seq[string]
 
 for kind, key, val in p.getopt():
   case kind:
     of cmdArgument:
-      cmd_seq.add(key)
+      case key:
+        of "resolve", "r" : cmd = "resolve"
+        of "edit", "e" : cmd = "edit"
+        of "list", "l" : cmd = "list"
+        of "create", "c" : cmd = "create"
+        of "delete", "d" : cmd = "delete"
+        else:
+          if cmd == "create":
+            title = key
+          elif not is_valid_id(key):
+            echo &"Invalid id {key}"
+            quit()
+          ids.add(key)
     of cmdLongOption, cmdShortOption:
       case key:
         of "help", "h": writeHelp()
         of "title", "t": title = val
         of "priority", "p": priority = parseFloat(val)
         of "description", "d": description = val
+        of "all", "a":
+          check_cmd(cmd, @["list"], "all")
+          only_open = false
     of cmdEnd: assert(false) # cannot happen
   
 
@@ -145,20 +231,26 @@ if len(cmd_seq) == 0:
   cmd_seq.add("list")
 
 
-case cmd_seq[0]:
-  of "create", "c":
+case cmd:
+  of "create":
     if len(cmd_seq) > 1:
       title = cmd_seq[1]
     var item = todo_item(title=title, priority=priority, description=description)
     item.write()
-  of "list", "l":
-    list_items()
-  of "resolve", "r":
-    let id = cmd_seq[1]
-    resolve_item(id)
+  of "list":
+    list_items(ids, only_open=only_open)
+  of "resolve":
+    check_id_argument("resolve", ids)
+    for id in ids:
+      resolve_item(id)
   of "edit", "e":
-    let id = cmd_seq[1]
-    edit_item(id)
+    check_id_argument("edit", ids)
+    for id in ids:
+      edit_item(id)
+  of "delete", "d":
+    check_id_argument("delete", ids)
+    for id in ids:
+      delete_item(id)
   else:
     writeHelp()
     quit(QuitFailure)
