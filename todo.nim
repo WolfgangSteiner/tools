@@ -31,6 +31,10 @@ proc gitAdd(path:string) =
   assertGitRepository()
   discard execCmd(&"git add {path}")
 
+proc gitRemove(path:string) =
+  assertGitRepository()
+  discard execCmd(&"git rm {path}")
+
 proc gitCommit(msg:string) =
   assertGitRepository()
   discard execCmd(&"git commit -m \"{msg}\"")
@@ -39,6 +43,13 @@ proc gitHasStagedFiles() : bool =
   assertGitRepository()
   for l in execProcess("git status --porcelain").splitLines():
     if l.match(re"^[AM]"):
+      return true
+  return false
+
+proc gitIsFileModified(fn:string) : bool =
+  assertGitRepository()
+  for l in execProcess("git status --porcelain").splitLines():
+    if l.match(re"^( M|M |MM)\s+") and l.contains(fn):
       return true
   return false
 
@@ -66,15 +77,19 @@ proc write_help() =
 ################################################################################
 ## ERROR HANDLING
 ################################################################################
-proc check(condition: bool, message: string) =
+proc check(condition:bool, message:string) =
   if not condition:
     echo message
     quit()
 
-proc check_false(condition: bool, message: string) =
+proc check_false(condition:bool, message:string) =
   if condition:
     echo message
     quit()
+
+
+template check_implies(cond1:untyped, cond2:untyped, message:string) =
+  check((cond1 and cond2) or not cond1, message)
 
 
 proc generate_id() : string = ($genUUID()).replace("-","")[0..<16]
@@ -93,7 +108,17 @@ type TodoItem = object
 
 
 func shortId(item: TodoItem) : string = return item.id[0..<7]
-func format_short(item: TodoItem) : string = &"{item.shortId}  {item.title}"
+
+proc format_short(item: TodoItem) : string = 
+  let separator_string = "  "
+  let id_string = item.shortId
+  let title_string =
+    if len(id_string) + len(separator_string) + len(item.title) > TERM_WIDTH:
+      let max_length = TERM_WIDTH - len(id_string) - len(separator_string) - 2
+      item.title[0..<max_length] & ".."
+    else:
+      item.title
+  return id_string & separator_string & title_string
 
 
 func `$`(item: TodoItem) : string =
@@ -115,8 +140,18 @@ proc format_verbose(item: TodoItem) : string =
   r.add(&"{item.description}")
   return r
 
+func format_title(item:TodoItem, quoted=true) : string =
+  if quoted:
+    &"\"{item.title}\""
+  else:
+    &"{item.title}"
 
-func format_message(item: TodoItem) : string = &"{item.shortId}: \"{item.title}\""
+
+func format_message(item: TodoItem, quoted:bool=true) : string =
+  &"{item.shortId}: {item.format_title(quoted)}"
+
+
+
 proc format(item: TodoItem, verbose=false) : string =
   if verbose:
     item.format_verbose()
@@ -218,15 +253,25 @@ proc filename_for_id(id: string) : string =
   return files[0]
 
 
+proc gitAdd(item:TodoItem) =
+  gitAdd(filename_for_id(item.id))
+
+proc gitCommit(item:TodoItem, title:string) =
+  gitCommit(&"{title} {item.format_message(quoted=false)}.")
+
+
 proc resolve_item(id:string, commit:bool=false) =
+  check_implies(commit, gitHasRepository(), "No git repository found!")
   var item = item_for_id(id)
   if item.status == tsOpen:
     item.status = tsResolved
+    check_implies(commit, gitHasStagedFiles(), "Please stage files before trying to resolve --commit.")
+    check_implies(not commit, not (gitHasRepository() and gitHasStagedFiles()),
+      "Can't resolve todo: non-empty git staging.")
     item.write()
-    if commit:
-      check(gitHasStagedFiles(), "Please stage files before trying to resolve --commit.")
-      gitAdd(filename_for_id(id))
-      gitCommit(&"Resolved {item.shortId}: {item.title}")
+    if gitHasRepository():
+      item.gitAdd()
+      item.gitCommit("Resolve")
     echo &"Resolved {item.format_message}."
   else:
     echo &"Already resolved {item.format_message}."
@@ -234,19 +279,33 @@ proc resolve_item(id:string, commit:bool=false) =
 
 proc create_item(title: string, description="", priority = 0.0) =
   var item = todo_item(title=title, priority=priority, description=description)
+  check_implies(gitHasRepository(), not gitHasStagedFiles(), "Can't create todo: non-empty git staging.")
   item.write()
+  if gitHasRepository():
+    item.gitAdd()
+    item.gitCommit("Add")
   echo &"Created item {item.format_message}"
 
 
 proc edit_item(id: string) =
+  check_implies(gitHasRepository(), not gitHasStagedFiles(), "Can't edit todo due to files in git staging.")
   let fn = filename_for_id(id)
   discard execCmd(&"vim {fn}")
+  let item = read_item(fn)
+  if gitHasRepository() and gitIsFileModified(fn):
+    item.gitAdd()
+    item.gitCommit("Update")
 
 
 proc delete_item(id: string) =
+  check_implies(gitHasRepository(), not gitHasStagedFiles(), "Can't delete todo due to files in git staging.")
   let fn = filename_for_id(id)
   let item = item_for_id(id)
-  removeFile(fn)
+  if gitHasRepository():
+    gitRemove(fn)
+    item.gitCommit(&"Remove")
+  else:
+    removeFile(fn)
   echo &"Deleted item {item.format_message}." 
 
 
