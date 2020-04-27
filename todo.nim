@@ -1,3 +1,4 @@
+import algorithm
 import os
 import osproc
 import parseopt
@@ -93,7 +94,7 @@ template check_implies(cond1:untyped, cond2:untyped, message:string) =
 
 
 proc generate_id() : string = ($genUUID()).replace("-","")[0..<16]
-proc current_date() : string = now().format("yyyy-MM-dd")
+proc current_date() : string = now().format("yyyy-MM-dd'T'HH:mm:ss")
 
 type TodoStatus = enum tsOpen = "open", tsResolved = "resolved"
 
@@ -105,7 +106,6 @@ type TodoItem = object
   priority*: float
   status*: TodoStatus
   description*: string
-
 
 func shortId(item: TodoItem) : string = return item.id[0..<7]
 
@@ -129,6 +129,7 @@ priority: {item.priority}
 status: {item.status}
 
 {item.description}"""
+
 
 
 proc format_verbose(item: TodoItem) : string =
@@ -222,7 +223,7 @@ proc list_items(items: seq[TodoItem], only_open=true, verbose=false) =
 
 
 proc list_items(ids: seq[string], only_open = true) =
-  let items =
+  var items =
     if len(ids) > 0:
       items_for_ids(ids)
     else:
@@ -230,6 +231,7 @@ proc list_items(ids: seq[string], only_open = true) =
   if len(items) == 0:
     echo "No todos found."
   else:
+    items = algorithm.sorted(items, proc(a, b:TodoItem): int = cmp(a.date,b.date))
     list_items(items, only_open, verbose=len(ids)>0)
 
 
@@ -260,21 +262,34 @@ proc gitCommit(item:TodoItem, title:string) =
   gitCommit(&"{title} {item.format_message(quoted=false)}.")
 
 
-proc resolve_item(id:string, commit:bool=false) =
+proc resolve_items(ids:seq[string], commit:bool=false) =
   check_implies(commit, gitHasRepository(), "No git repository found!")
-  var item = item_for_id(id)
-  if item.status == tsOpen:
+
+  check_implies(commit, gitHasStagedFiles(), "Please stage files before trying to resolve --commit.")
+  check_implies(not commit, not (gitHasRepository() and gitHasStagedFiles()),
+    "Can't resolve todo: non-empty git staging.")
+ 
+  var resolved_ids : seq[string] = @[]
+  var messages : seq[string] = @[]
+
+  for id in ids:
+    var item = item_for_id(id)
+    if item.status == tsOpen:
+      resolved_ids.add(id)
+    else:
+      echo &"Already resolved {item.format_message}. Aborting."
+  
+  for id in resolved_ids:
+    var item = item_for_id(id)
     item.status = tsResolved
-    check_implies(commit, gitHasStagedFiles(), "Please stage files before trying to resolve --commit.")
-    check_implies(not commit, not (gitHasRepository() and gitHasStagedFiles()),
-      "Can't resolve todo: non-empty git staging.")
     item.write()
+    messages.add(item.title)
     if gitHasRepository():
       item.gitAdd()
-      item.gitCommit("Resolve")
     echo &"Resolved {item.format_message}."
-  else:
-    echo &"Already resolved {item.format_message}."
+
+  if gitHasRepository():
+    gitCommit(messages.join(", "))
 
 
 proc create_item(title: string, description="", priority = 0.0) =
@@ -335,6 +350,7 @@ var only_open = true
 var cmd : string = "list"
 var ids : seq[string]
 var commit : bool = false
+var no_commit: bool = false
 
 var p = initOptParser("")
 
@@ -363,6 +379,8 @@ for kind, key, val in p.getopt():
         of "commit",:
           check_cmd(cmd, @["resolve"], "commit")
           commit = true
+        of "no-commit":
+          no_commit = true
         of "all", "a":
           check_cmd(cmd, @["list"], "all")
           only_open = false
@@ -381,9 +399,7 @@ case cmd:
     list_items(ids, only_open=only_open)
   of "resolve":
     check_id_argument("resolve", ids)
-    check_false(commit and len(ids) > 1, "Only one id allowed for option --commit.")
-    for id in ids:
-      resolve_item(id, commit=commit)
+    resolve_items(ids, commit=commit)
   of "edit", "e":
     check_id_argument("edit", ids)
     for id in ids:
