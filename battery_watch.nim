@@ -42,11 +42,13 @@ while true:
   if is_battery_discharging():
     let percent = battery_percent()
     if percent < CRITICAL_PERCENT:
-      discard execCmd("echo systemctl hybrid-sleep")
+      discard execCmd("systemctl hybrid-sleep")
     elif percent < DANGER_PERCENT:
       update_nagbar("error", percent)
     elif percent < SAFE_PERCENT:
       update_nagbar("warning", percent)
+    else:
+      kill_nagbar()
   else:
     kill_nagbar()
 
