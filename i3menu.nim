@@ -42,9 +42,11 @@ proc display_i3() =
 
 
 proc display_computer() =
-  case dmenu("Computer", "Lock screen", "Hibernate", "Reboot"):
+  case dmenu("Computer", "Lock screen", "Suspend", "Hibernate", "Reboot"):
     of "Lock screen":
       lock_screen()
+    of "Suspend":
+      discard execCmd("systemctl hybrid-sleep")
     of "Hibernate":
       discard execCmd("systemctl hibernate")
     of "Reboot":
