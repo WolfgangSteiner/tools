@@ -88,31 +88,45 @@ size_t calc_alloc_size(size_t size)
     return mask + 1;
 }
 
+char test_wst_vector_char_deallocator_buffer[256] = {};
+
+void test_wst_vector_char_deallocator(char* c)
+{ 
+    size_t idx = strlen(test_wst_vector_char_deallocator_buffer);
+    test_wst_vector_char_deallocator_buffer[idx] = *c;
+}
+
 
 void test_wst_vector_char()
 {
     wst_vector_char* v = wst_vector_char_allocate();
+    const char* test_string = "!!!Hello World!!!";
+    for (int i = 3; i < strlen(test_string); ++i)
     {
-        v = wst_vector_char_pushBack(v, 'H');
-        v = wst_vector_char_pushBack(v, 'e');
-        v = wst_vector_char_pushBack(v, 'l');
-        v = wst_vector_char_pushBack(v, 'l');
-        v = wst_vector_char_pushBack(v, 'o');
-        v = wst_vector_char_pushBack(v, ' ');
-        v = wst_vector_char_pushBack(v, 'W');
-        v = wst_vector_char_pushBack(v, 'o');
-        v = wst_vector_char_pushBack(v, 'r');
-        v = wst_vector_char_pushBack(v, 'l');
-        v = wst_vector_char_pushBack(v, 'd');
-        v = wst_vector_char_pushBack(v, '!');
-        v = wst_vector_char_pushFront(v, '!');
-        v = wst_vector_char_pushFront(v, '!');
-        v = wst_vector_char_pushFront(v, '!');
-        v = wst_vector_char_pushBack(v, 0);
-        TEST_ASSERT_EQUAL_STRING("!!!Hello World!", v->data);
-        TEST_ASSERT_EQUAL(calc_alloc_size(v->size), v->capacity);
+        v = wst_vector_char_pushBack(v, test_string[i]);
     }
+
+    for (int i = 0; i < 3; ++i)
+    {
+        v = wst_vector_char_pushFront(v, test_string[i]);
+    }
+
+    v = wst_vector_char_pushBack(v, 0);
+    TEST_ASSERT_EQUAL_STRING(test_string, v->data);
+    TEST_ASSERT_EQUAL(calc_alloc_size(v->size), v->capacity);
+    v->deallocator = test_wst_vector_char_deallocator;
+
+    wst_vector_char* v2 = wst_vector_char_copy(v);
+    TEST_ASSERT_EQUAL_STRING(test_string, v2->data);
+
+    wst_vector_char_free(v2);
+    TEST_ASSERT_EQUAL_STRING(test_string, test_wst_vector_char_deallocator_buffer);
+
+    TEST_ASSERT_EQUAL(test_string[0], wst_vector_char_popFront(v));
+    TEST_ASSERT_EQUAL_STRING(&test_string[1], v->data);
+    TEST_ASSERT_EQUAL(strlen(test_string) - 1, v->size - 1);
 }
+
 
 void test_wst_vector_int()
 {
@@ -135,6 +149,16 @@ void test_wst_vector_float()
         TEST_ASSERT_EQUAL(i, v->data[i]);
         TEST_ASSERT_EQUAL(calc_alloc_size(v->size), v->capacity);
     }
+
+    TEST_ASSERT_EQUAL(999, wst_vector_float_at(v, -1));
+    TEST_ASSERT_EQUAL(0, wst_vector_float_at(v, 0));
+
+    wst_vector_float* v2 = wst_vector_float_copy(v);
+    TEST_ASSERT(wst_vector_float_equal(v, v2));
+    wst_vector_float_set(v2, -1, 42);
+    TEST_ASSERT_FALSE(wst_vector_float_equal(v, v2));
+    wst_vector_float_popBack(v2);
+    TEST_ASSERT_FALSE(wst_vector_float_equal(v, v2));
 }
 
 

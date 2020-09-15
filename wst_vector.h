@@ -5,23 +5,28 @@
 #include <assert.h>
 
 #define WST_VECTOR_ALLOC_SIZE_DEFAULT 16
-
-
-#define WST_VECTOR_DEFINE_STRUCT(VECTOR_TYPE) \
-    typedef struct { size_t size; size_t capacity; VECTOR_TYPE data[]; } wst_vector_##VECTOR_TYPE;\
-
-
 #define WST_VECTOR_CALC_ALLOC_SIZE(TYPE, CAPACITY) (sizeof(wst_vector_##TYPE) + CAPACITY * sizeof(TYPE))
 
 
+#define WST_VECTOR_DEFINE_STRUCT(TYPE) \
+    typedef struct\
+    {\
+        size_t size;\
+        size_t capacity;\
+        void(*deallocator)(TYPE *);\
+        TYPE data[];\
+    } wst_vector_##TYPE;\
+
+
 #define WST_VECTOR_DEFINE_ALLOCATE_WITH_CAPACITY(TYPE) \
-wst_vector_##TYPE* wst_vector_##TYPE##_allocate_with_capacity(size_t capacity)\
-{\
-    wst_vector_##TYPE* v = malloc(WST_VECTOR_CALC_ALLOC_SIZE(TYPE, capacity));\
-    v->size = 0;\
-    v->capacity = capacity;\
-    return v;\
-}\
+    wst_vector_##TYPE* wst_vector_##TYPE##_allocate_with_capacity(size_t capacity)\
+    {\
+        wst_vector_##TYPE* v = malloc(WST_VECTOR_CALC_ALLOC_SIZE(TYPE, capacity));\
+        v->size = 0;\
+        v->capacity = capacity;\
+        v->deallocator = 0;\
+        return v;\
+    }\
 
 
 #define WST_VECTOR_DEFINE_ALLOCATE(TYPE) \
@@ -68,9 +73,20 @@ wst_vector_##TYPE* wst_vector_##TYPE##_allocate_with_capacity(size_t capacity)\
 #define WST_VECTOR_DEFINE_AT(TYPE)\
     TYPE wst_vector_##TYPE##_at(wst_vector_##TYPE* v, int index)\
     {\
+        if (index < 0) index += v->size;\
         assert(index >= 0);\
         assert(index < v->size);\
         return v->data[index];\
+    }\
+
+
+#define WST_VECTOR_DEFINE_SET(TYPE)\
+    void wst_vector_##TYPE##_set(wst_vector_##TYPE* v, int index, TYPE value)\
+    {\
+        if (index < 0) index += v->size;\
+        assert(index >= 0);\
+        assert(index < v->size);\
+        v->data[index] = value;\
     }\
 
 
@@ -78,11 +94,66 @@ wst_vector_##TYPE* wst_vector_##TYPE##_allocate_with_capacity(size_t capacity)\
     wst_vector_##TYPE* wst_vector_##TYPE##_pushFront(wst_vector_##TYPE* v, TYPE e)\
     {\
         v = wst_vector_##TYPE##_checkAndGrow(v);\
-        memmove(v->data + 1, v->data, v->size);\
+        memmove(v->data + 1, v->data, v->size * sizeof(TYPE));\
         v->data[0] = e;\
         v->size++;\
         return v;\
     }
+
+#define WST_VECTOR_DEFINE_POP_FRONT(TYPE)\
+    TYPE wst_vector_##TYPE##_popFront(wst_vector_##TYPE* v)\
+    {\
+        TYPE result = v->data[0];\
+        if (--v->size)\
+        {\
+            memmove(v->data, v->data + 1, v->size * sizeof(TYPE));\
+        }\
+        return result;\
+    }
+
+#define WST_VECTOR_DEFINE_FREE(TYPE)\
+    void wst_vector_##TYPE##_free(wst_vector_##TYPE* v)\
+    {\
+        if (v->deallocator)\
+        {\
+            for (size_t i = 0; i < v->size; ++i)\
+            {\
+                v->deallocator(&(v->data[i]));\
+            }\
+        }\
+        free(v);\
+    }\
+
+#define WST_VECTOR_DEFINE_COPY(TYPE)\
+    wst_vector_##TYPE* wst_vector_##TYPE##_copy(wst_vector_##TYPE* v)\
+    {\
+        wst_vector_##TYPE* v2 = malloc(WST_VECTOR_CALC_ALLOC_SIZE(TYPE, v->size));\
+        memcpy(v2, v, WST_VECTOR_CALC_ALLOC_SIZE(TYPE, v->size));\
+        return v2;\
+    }\
+
+
+#define WST_VECTOR_DEFINE_EQUAL(TYPE)\
+    bool wst_vector_##TYPE##_equal(\
+            const wst_vector_##TYPE* v1,\
+            const wst_vector_##TYPE* v2)\
+    {\
+        if (v1->size != v2->size)\
+        {\
+            return false;\
+        }\
+        else\
+        {\
+            for (size_t i = 0; i < v1->size; ++i)\
+            {\
+                if (v1->data[i] != v2->data[i])\
+                {\
+                    return false;\
+                }\
+            }\
+            return true;\
+        }\
+    }\
 
 
 #define WST_VECTOR_DECLARE(TYPE) \
@@ -94,7 +165,12 @@ wst_vector_##TYPE* wst_vector_##TYPE##_allocate_with_capacity(size_t capacity)\
     WST_VECTOR_DEFINE_PUSH_BACK(TYPE) \
     WST_VECTOR_DEFINE_PUSH_FRONT(TYPE) \
     WST_VECTOR_DEFINE_POP_BACK(TYPE) \
+    WST_VECTOR_DEFINE_POP_FRONT(TYPE) \
     WST_VECTOR_DEFINE_AT(TYPE) \
+    WST_VECTOR_DEFINE_SET(TYPE) \
+    WST_VECTOR_DEFINE_FREE(TYPE) \
+    WST_VECTOR_DEFINE_COPY(TYPE) \
+    WST_VECTOR_DEFINE_EQUAL(TYPE) \
 
 
 #endif
