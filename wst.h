@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
-
+#include <stdarg.h>
 
 #define WST_STRING_ARRAY_ALLOC_SIZE_DEFAULT 16
 #define WST_STRING_ARRAY_ALLOC_INCREMENT 16 
@@ -25,6 +25,21 @@ float wst_minf(float a, float b)
 double wst_mind(float a, float b)
 {
     return a < b ? a : b;
+}
+
+int wst_max(int a, int b)
+{
+    return a > b ? a : b;
+}
+
+float wst_maxf(float a, float b)
+{
+    return a > b ? a : b;
+}
+
+double wst_maxd(float a, float b)
+{
+    return a > b ? a : b;
 }
 
 
@@ -49,6 +64,14 @@ char* wst_string_append(char* s1, char* s2)
     return result;
 }
 
+char* wst_string_appendChar(char* s1, char c)
+{
+    uint length1 = strlen(s1);
+    char* result = realloc(s1, length1 + 1 + 1);
+    result[length1] = c;
+    result[length1 + 1] = '\0'; 
+    return result;
+}
 
 char* wst_string_appendRange(char* s1, char* s2, uint count)
 {
@@ -156,6 +179,22 @@ void wst_string_rstrip(char* s)
     }
 }
 
+void wst_string_lstrip(char* s)
+{
+    int idx = 0;
+
+    while (s[idx] == '\n' || s[idx] == '\t' || s[idx] == ' ')
+    {
+        idx++;
+    }
+
+    if (idx > 0)
+    {
+        memmove(s, &s[idx], strlen(s) - idx);
+        s[strlen(s) - idx] = '\0';
+    }
+}
+
 
 int wst_string_findCharFromFront(char* s, char c)
 {
@@ -230,7 +269,7 @@ char* wst_string_splitFromFront(char* s, char* splitString)
     }
     else if (pos == 0)
     {
-        return "";
+        return wst_string_init("");
     }
     else
     {
@@ -267,28 +306,94 @@ bool wst_string_endsWith(char* s, char* subString)
 }
 
 
+bool wst_string_contains(char* s, char* subString)
+{
+    char* start = strstr(s, subString);
+    return start;
+}
+
+
+char* wst_string_format(char* formatString, ...)
+{
+    va_list argptr;
+    va_start(argptr, formatString);
+    int length = vsnprintf(0, 0, formatString, argptr);
+    va_end(argptr);
+
+    char* result = wst_string_alloc(length);
+    va_start(argptr, formatString);
+    vsnprintf(result, length + 1, formatString, argptr);
+    va_end(argptr);
+
+    return result;    
+}
+
+bool wst_is_whitespace(char c)
+{
+    return (c == ' ' || c == '\t' || c == '\n');
+}
+
+char* wst_string_getNextToken(char* s)
+{
+    char* ptr = s;
+    bool isInToken = !wst_is_whitespace(s[0]);
+
+    while (true)
+    {
+        char c = *ptr;
+        
+        if (c == '\0') return 0;
+        if (!isInToken && !wst_is_whitespace(c)) return ptr;
+        if (isInToken && wst_is_whitespace(c)) isInToken = false;
+        ptr++;
+    }
+}
+
+char* wst_string_getColumn(char* s, int col)
+{
+    char* tokenStart = s;
+
+    for (int i = 0; i < col; ++i)
+    {
+        tokenStart = wst_string_getNextToken(tokenStart);
+        if (tokenStart == 0)
+        {
+            return wst_string_init("");
+        }
+    }
+
+    char* tokenEnd = tokenStart; 
+    
+    while(!wst_is_whitespace(*tokenEnd) && *tokenEnd != '\0')
+    {
+        tokenEnd++;
+    }
+
+    tokenEnd--;
+
+    return wst_string_initFromRange(s, tokenStart - s, tokenEnd - s + 1);
+}
+
+
+
 typedef struct
 {
   uint count;
   uint alloc_count;
   char* strings[1];
-} wst_string_array_t;
+} wst_string_array;
 
 
-typedef char* wst_string;
-typedef wst_string_array_t* wst_string_array;
-
-
-wst_string_array wst_string_array_new()
+wst_string_array* wst_string_array_new()
 {
-  uint ALLOC_SIZE = sizeof(wst_string_array_t) + sizeof(char*) * (WST_STRING_ARRAY_ALLOC_SIZE_DEFAULT - 1);
-  wst_string_array arr = malloc(ALLOC_SIZE);
+  uint ALLOC_SIZE = sizeof(wst_string_array) + sizeof(char*) * (WST_STRING_ARRAY_ALLOC_SIZE_DEFAULT - 1);
+  wst_string_array* arr = malloc(ALLOC_SIZE);
   memset(arr, 0, ALLOC_SIZE);
   arr->alloc_count = WST_STRING_ARRAY_ALLOC_SIZE_DEFAULT;
   return arr;
 }
 
-void wst_string_array_delete(wst_string_array arr)
+void wst_string_array_delete(wst_string_array* arr)
 {
     for (int i = 0; i < arr->count; i++)
     {
@@ -299,11 +404,11 @@ void wst_string_array_delete(wst_string_array arr)
 }
 
 
-wst_string_array wst_string_array_append(wst_string_array arr, char* s)
+wst_string_array* wst_string_array_append(wst_string_array* arr, char* s)
 {
     if (arr->count == arr->alloc_count)
     {
-      uint alloc_size = sizeof(wst_string_array_t) + sizeof(char*) * (arr->alloc_count + WST_STRING_ARRAY_ALLOC_INCREMENT - 1);
+      uint alloc_size = sizeof(wst_string_array) + sizeof(char*) * (arr->alloc_count + WST_STRING_ARRAY_ALLOC_INCREMENT - 1);
       arr = realloc(arr, alloc_size);
       arr->alloc_count += WST_STRING_ARRAY_ALLOC_INCREMENT;
     }
@@ -316,7 +421,7 @@ wst_string_array wst_string_array_append(wst_string_array arr, char* s)
 
 
 
-wst_string_array wst_string_array_appendStrings(wst_string_array arr, char** strings, int count)
+wst_string_array* wst_string_array_appendStrings(wst_string_array* arr, char** strings, int count)
 {
     for (int i = 0; i < count; i++)
     {
@@ -327,9 +432,9 @@ wst_string_array wst_string_array_appendStrings(wst_string_array arr, char** str
 }
 
 
-wst_string_array wst_string_array_init(char** str_arr, int count)
+wst_string_array* wst_string_array_init(char** str_arr, int count)
 {
-    wst_string_array arr = wst_string_array_new();
+    wst_string_array* arr = wst_string_array_new();
     for (int i = 0; i < count; ++i)
     {
         arr = wst_string_array_append(arr, str_arr[i]);
@@ -339,25 +444,25 @@ wst_string_array wst_string_array_init(char** str_arr, int count)
 }
 
 
-wst_string_array wst_string_array_initWithString(wst_string_array arr, char* s)
+wst_string_array* wst_string_array_initWithString(wst_string_array* arr, char* s)
 {
     return wst_string_array_init(&s, 1);
 }
 
 
-uint wst_string_array_size(wst_string_array arr)
+uint wst_string_array_size(wst_string_array* arr)
 {
   return arr->count;
 }
 
 
-char* wst_string_array_at(wst_string_array arr, uint index)
+char* wst_string_array_at(wst_string_array* arr, uint index)
 {
   return arr->strings[index];
 }
 
 
-wst_string wst_string_array_join(wst_string_array arr, char* joinString)
+char* wst_string_array_join(wst_string_array* arr, char* joinString)
 {
     uint numStrings = wst_string_array_size(arr);
 
@@ -371,7 +476,7 @@ wst_string wst_string_array_join(wst_string_array arr, char* joinString)
     }
     else
     {
-        wst_string result = wst_string_init(wst_string_array_at(arr, 0));
+        char* result = wst_string_init(wst_string_array_at(arr, 0));
 
         for (int i = 1; i < numStrings; i++)
         {
@@ -383,10 +488,39 @@ wst_string wst_string_array_join(wst_string_array arr, char* joinString)
     }
 }
 
-
-wst_string_array wst_string_split(char* s, char c)
+bool wst_string_array_containsSubString(wst_string_array* array, char* string)
 {
-  wst_string_array arr = wst_string_array_new();
+    for (int i = 0; i < array->count; ++i)
+    {
+        if (wst_string_contains(array->strings[i], string))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+wst_string_array* wst_string_array_grep(wst_string_array* array, char* string)
+{
+    wst_string_array* result = wst_string_array_new();
+    
+    for (int i = 0; i < array->count; i++)
+    {
+        char* s = array->strings[i];
+        if (wst_string_contains(s, string))
+        {
+            result = wst_string_array_append(result, wst_string_init(s));
+        }
+    }
+
+    return result;
+}
+
+
+wst_string_array* wst_string_split(char* s, char c)
+{
+  wst_string_array* arr = wst_string_array_new();
 
   char currentChar = s[0];
   uint currentIndex = 0;
@@ -412,12 +546,12 @@ wst_string_array wst_string_split(char* s, char c)
 }
 
 
-wst_string wst_string_replace(char* s, char* subString, char* replaceString)
+char* wst_string_replace(char* s, char* subString, char* replaceString)
 {
     char* currentStart = s;
     char* currentEnd;
     char* end = s + strlen(s);
-    wst_string result = wst_string_new();
+    char* result = wst_string_new();
 
     while (currentEnd = strstr(currentStart, subString))
     {
@@ -431,13 +565,13 @@ wst_string wst_string_replace(char* s, char* subString, char* replaceString)
 }
 
 
-wst_string_array wst_system(char* cmd)
+wst_string_array* wst_system(char* cmd)
 {
     FILE* fp;
     
     fp = popen(cmd, "r");
     
-    wst_string_array arr = wst_string_array_new();
+    wst_string_array* arr = wst_string_array_new();
     char* buffer = wst_string_alloc(4096);
 
     while (fgets(buffer, 4096, fp))
@@ -445,6 +579,29 @@ wst_string_array wst_system(char* cmd)
         wst_string_rstrip(buffer);
         arr = wst_string_array_append(arr, buffer);
     }
+
+    wst_string_delete(buffer);
+    pclose(fp);
+
+    return arr;
+}
+
+
+wst_string_array* wst_readlines(char* fileName)
+{
+    FILE* fp = fopen(fileName, "r");
+    
+    wst_string_array* arr = wst_string_array_new();
+    char* buffer = wst_string_alloc(4096);
+
+    while (fgets(buffer, 4096, fp))
+    {
+        wst_string_rstrip(buffer);
+        arr = wst_string_array_append(arr, buffer);
+    }
+
+    wst_string_delete(buffer);
+    fclose(fp);
 
     return arr;
 }
@@ -462,8 +619,8 @@ char* wst_dmenu(char* prompt, char* choices)
 
     if (wst_string_length(choices) > 0)
     {
-        wst_string choicesFmt = wst_string_replace(choices, ",", "\\n");
-        wst_string cmd = wst_string_init("echo -e \"");
+        char* choicesFmt = wst_string_replace(choices, ",", "\\n");
+        char* cmd = wst_string_init("echo -e \"");
         cmd = wst_string_append(cmd, choicesFmt);
         cmd = wst_string_append(cmd, "\" | dmenu -i ");
 
@@ -474,7 +631,7 @@ char* wst_dmenu(char* prompt, char* choices)
             cmd = wst_string_append(cmd, "\"");
         }
 
-        wst_string_array arr = wst_system(cmd);
+        wst_string_array* arr = wst_system(cmd);
 
         if (wst_string_array_size(arr))
         {
@@ -488,5 +645,22 @@ char* wst_dmenu(char* prompt, char* choices)
 
     return result;
 } 
+
+char* wst_formatPercentBar(float percent, int numSegments, char* symbols)
+{
+    const float numActiveSegments = percent / 100 * numSegments;
+    const int numSymbols = strlen(symbols);
+    char* result = wst_string_init("[");
+    for (int i=0; i < numSegments; ++i)
+    {
+        const float residual = wst_minf(wst_maxf(0.0f, numActiveSegments - i), numSymbols - 1);
+        const int idx = wst_min(numSymbols - 1, wst_max(0, (int)(residual * numSymbols)));
+        result = wst_string_appendChar(result, symbols[idx]);
+    }
+
+    result = wst_string_append(result, "]");
+}
+
+
 
 #endif 
