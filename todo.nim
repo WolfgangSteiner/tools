@@ -135,8 +135,8 @@ status: {item.status}
 proc format_verbose(item: TodoItem) : string =
   var r = separator3()
   r.add(&"# {item.shortId}  {item.title}\n")
-  r.add("#\n")
-  r.add(&"#          date:{item.date}  priority:{item.priority}  status:{item.status}  tags:{item.tags}\n")
+#  r.add("#\n")
+#  r.add(&"#          date:{item.date}  priority:{item.priority}  status:{item.status}  tags:{item.tags}\n")
   r.add(separator3())
   r.add(&"{item.description}")
   return r

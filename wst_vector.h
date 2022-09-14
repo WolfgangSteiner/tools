@@ -1,8 +1,10 @@
 #ifndef WST_VECTOR_H
 #define WST_VECTOR_H
 
-
+#include <stdlib.h>
+#include <string.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #define WST_VECTOR_ALLOC_SIZE_DEFAULT 16
 #define WST_VECTOR_CALC_ALLOC_SIZE(TYPE, CAPACITY) (sizeof(wst_vector_##TYPE) + CAPACITY * sizeof(TYPE))

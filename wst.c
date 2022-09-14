@@ -362,16 +362,16 @@ char* wst_string_getColumn(char* s, int col)
 }
 
 
-wst_string_array* wst_string_array_new()
+wst_strarr* wst_strarr_new()
 {
-  uint ALLOC_SIZE = sizeof(wst_string_array) + sizeof(char*) * (WST_STRING_ARRAY_ALLOC_SIZE_DEFAULT - 1);
-  wst_string_array* arr = malloc(ALLOC_SIZE);
+  uint ALLOC_SIZE = sizeof(wst_strarr) + sizeof(char*) * (WST_STRING_ARRAY_ALLOC_SIZE_DEFAULT - 1);
+  wst_strarr* arr = malloc(ALLOC_SIZE);
   memset(arr, 0, ALLOC_SIZE);
   arr->alloc_count = WST_STRING_ARRAY_ALLOC_SIZE_DEFAULT;
   return arr;
 }
 
-void wst_string_array_delete(wst_string_array* arr)
+void wst_strarr_delete(wst_strarr* arr)
 {
     for (int i = 0; i < arr->count; i++)
     {
@@ -382,11 +382,11 @@ void wst_string_array_delete(wst_string_array* arr)
 }
 
 
-wst_string_array* wst_string_array_append(wst_string_array* arr, char* s)
+wst_strarr* wst_strarr_append(wst_strarr* arr, char* s)
 {
     if (arr->count == arr->alloc_count)
     {
-      uint alloc_size = sizeof(wst_string_array) + sizeof(char*) * (arr->alloc_count + WST_STRING_ARRAY_ALLOC_INCREMENT - 1);
+      uint alloc_size = sizeof(wst_strarr) + sizeof(char*) * (arr->alloc_count + WST_STRING_ARRAY_ALLOC_INCREMENT - 1);
       arr = realloc(arr, alloc_size);
       arr->alloc_count += WST_STRING_ARRAY_ALLOC_INCREMENT;
     }
@@ -399,50 +399,50 @@ wst_string_array* wst_string_array_append(wst_string_array* arr, char* s)
 
 
 
-wst_string_array* wst_string_array_appendStrings(wst_string_array* arr, char** strings, int count)
+wst_strarr* wst_strarr_appendStrings(wst_strarr* arr, char** strings, int count)
 {
     for (int i = 0; i < count; i++)
     {
-        arr = wst_string_array_append(arr, strings[i]);
+        arr = wst_strarr_append(arr, strings[i]);
     }
 
     return arr;
 }
 
 
-wst_string_array* wst_string_array_init(char** str_arr, int count)
+wst_strarr* wst_strarr_init(char** str_arr, int count)
 {
-    wst_string_array* arr = wst_string_array_new();
+    wst_strarr* arr = wst_strarr_new();
     for (int i = 0; i < count; ++i)
     {
-        arr = wst_string_array_append(arr, str_arr[i]);
+        arr = wst_strarr_append(arr, str_arr[i]);
     }
 
     return arr;
 }
 
 
-wst_string_array* wst_string_array_initWithString(wst_string_array* arr, char* s)
+wst_strarr* wst_strarr_initWithString(wst_strarr* arr, char* s)
 {
-    return wst_string_array_init(&s, 1);
+    return wst_strarr_init(&s, 1);
 }
 
 
-uint wst_string_array_size(wst_string_array* arr)
+uint wst_strarr_size(wst_strarr* arr)
 {
   return arr->count;
 }
 
 
-char* wst_string_array_at(wst_string_array* arr, uint index)
+char* wst_strarr_at(wst_strarr* arr, uint index)
 {
   return arr->strings[index];
 }
 
 
-char* wst_string_array_join(wst_string_array* arr, char* joinString)
+char* wst_strarr_join(wst_strarr* arr, char* joinString)
 {
-    uint numStrings = wst_string_array_size(arr);
+    uint numStrings = wst_strarr_size(arr);
 
     if (numStrings == 0)
     {
@@ -450,23 +450,23 @@ char* wst_string_array_join(wst_string_array* arr, char* joinString)
     }
     else if (numStrings == 1)
     {
-        return wst_string_init(wst_string_array_at(arr, 0));
+        return wst_string_init(wst_strarr_at(arr, 0));
     }
     else
     {
-        char* result = wst_string_init(wst_string_array_at(arr, 0));
+        char* result = wst_string_init(wst_strarr_at(arr, 0));
 
         for (int i = 1; i < numStrings; i++)
         {
             result = wst_string_append(result, joinString);
-            result = wst_string_append(result, wst_string_array_at(arr, i));
+            result = wst_string_append(result, wst_strarr_at(arr, i));
         }
 
         return result;
     }
 }
 
-bool wst_string_array_containsSubString(wst_string_array* array, char* string)
+bool wst_strarr_containsSubString(wst_strarr* array, char* string)
 {
     for (int i = 0; i < array->count; ++i)
     {
@@ -479,16 +479,16 @@ bool wst_string_array_containsSubString(wst_string_array* array, char* string)
     return false;
 }
 
-wst_string_array* wst_string_array_grep(wst_string_array* array, char* string)
+wst_strarr* wst_strarr_grep(wst_strarr* array, char* string)
 {
-    wst_string_array* result = wst_string_array_new();
+    wst_strarr* result = wst_strarr_new();
     
     for (int i = 0; i < array->count; i++)
     {
         char* s = array->strings[i];
         if (wst_string_contains(s, string))
         {
-            result = wst_string_array_append(result, wst_string_init(s));
+            result = wst_strarr_append(result, wst_string_init(s));
         }
     }
 
@@ -496,9 +496,9 @@ wst_string_array* wst_string_array_grep(wst_string_array* array, char* string)
 }
 
 
-wst_string_array* wst_string_split(char* s, char c)
+wst_strarr* wst_string_split(char* s, char c)
 {
-  wst_string_array* arr = wst_string_array_new();
+  wst_strarr* arr = wst_strarr_new();
 
   char currentChar = s[0];
   uint currentIndex = 0;
@@ -508,7 +508,7 @@ wst_string_array* wst_string_split(char* s, char c)
   {
     if (currentChar == c)
     {
-      arr = wst_string_array_append(arr, wst_string_initFromRange(s, currentStartIndex, currentIndex));
+      arr = wst_strarr_append(arr, wst_string_initFromRange(s, currentStartIndex, currentIndex));
       currentStartIndex = currentIndex + 1;
     }
     currentIndex++;
@@ -517,7 +517,7 @@ wst_string_array* wst_string_split(char* s, char c)
 
 //  if (currentStartIndex < currentIndex)
   {
-    arr = wst_string_array_append(arr, wst_string_initFromRange(s, currentStartIndex, currentIndex));
+    arr = wst_strarr_append(arr, wst_string_initFromRange(s, currentStartIndex, currentIndex));
   }
 
   return arr;
@@ -543,19 +543,19 @@ char* wst_string_replace(char* s, char* subString, char* replaceString)
 }
 
 
-wst_string_array* wst_system(char* cmd)
+wst_strarr* wst_system(char* cmd)
 {
     FILE* fp;
     
     fp = popen(cmd, "r");
     
-    wst_string_array* arr = wst_string_array_new();
+    wst_strarr* arr = wst_strarr_new();
     char* buffer = wst_string_alloc(4096);
 
     while (fgets(buffer, 4096, fp))
     {
         wst_string_rstrip(buffer);
-        arr = wst_string_array_append(arr, buffer);
+        arr = wst_strarr_append(arr, buffer);
     }
 
     wst_string_delete(buffer);
@@ -565,17 +565,17 @@ wst_string_array* wst_system(char* cmd)
 }
 
 
-wst_string_array* wst_readlines(char* fileName)
+wst_strarr* wst_readlines(char* fileName)
 {
     FILE* fp = fopen(fileName, "r");
     
-    wst_string_array* arr = wst_string_array_new();
+    wst_strarr* arr = wst_strarr_new();
     char* buffer = wst_string_alloc(4096);
 
     while (fgets(buffer, 4096, fp))
     {
         wst_string_rstrip(buffer);
-        arr = wst_string_array_append(arr, buffer);
+        arr = wst_strarr_append(arr, buffer);
     }
 
     wst_string_delete(buffer);
@@ -609,16 +609,16 @@ char* wst_dmenu(char* prompt, char* choices)
             cmd = wst_string_append(cmd, "\"");
         }
 
-        wst_string_array* arr = wst_system(cmd);
+        wst_strarr* arr = wst_system(cmd);
 
-        if (wst_string_array_size(arr))
+        if (wst_strarr_size(arr))
         {
-            result = wst_string_init(wst_string_array_at(arr, 0));
+            result = wst_string_init(wst_strarr_at(arr, 0));
         }
         
         wst_string_delete(choicesFmt);
         wst_string_delete(cmd);
-        wst_string_array_delete(arr);
+        wst_strarr_delete(arr);
     }
 
     return result;

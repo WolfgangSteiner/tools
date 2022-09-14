@@ -105,27 +105,27 @@ void test_wst_string_getColumn()
 }
 
 
-void test_wst_string_array_new()
+void test_wst_strarr_new()
 {
-    wst_string_array* arr = wst_string_array_new();
+    wst_strarr* arr = wst_strarr_new();
     TEST_ASSERT_EQUAL(0, arr->count);
     TEST_ASSERT_EQUAL(WST_STRING_ARRAY_ALLOC_SIZE_DEFAULT, arr->alloc_count);
-    wst_string_array_delete(arr);
+    wst_strarr_delete(arr);
 }
 
 
-void test_wst_string_array_append()
+void test_wst_strarr_append()
 {
-    wst_string_array* arr = wst_string_array_new();
+    wst_strarr* arr = wst_strarr_new();
 
     for (int i = 0; i < WST_STRING_ARRAY_ALLOC_SIZE_DEFAULT + 2 * WST_STRING_ARRAY_ALLOC_INCREMENT + 1; i++)
     {
-        arr = wst_string_array_append(arr, "Alpha");
-        TEST_ASSERT_EQUAL(i + 1, wst_string_array_size(arr));
-        TEST_ASSERT_EQUAL_STRING("Alpha", wst_string_array_at(arr, i));
+        arr = wst_strarr_append(arr, "Alpha");
+        TEST_ASSERT_EQUAL(i + 1, wst_strarr_size(arr));
+        TEST_ASSERT_EQUAL_STRING("Alpha", wst_strarr_at(arr, i));
     }
 
-    wst_string_array_delete(arr);
+    wst_strarr_delete(arr);
 }
 
 
@@ -225,8 +225,8 @@ int main(void)
     RUN_TEST(test_wst_string_lstrip);
     RUN_TEST(test_wst_string_getNextToken);
     RUN_TEST(test_wst_string_getColumn);
-    RUN_TEST(test_wst_string_array_new);
-    RUN_TEST(test_wst_string_array_append);
+    RUN_TEST(test_wst_strarr_new);
+    RUN_TEST(test_wst_strarr_append);
     RUN_TEST(test_wst_vector_char);
     RUN_TEST(test_wst_vector_int);
     RUN_TEST(test_wst_vector_float);

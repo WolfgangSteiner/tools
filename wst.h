@@ -7,10 +7,15 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 #define WST_STRING_ARRAY_ALLOC_SIZE_DEFAULT 16
 #define WST_STRING_ARRAY_ALLOC_INCREMENT 16 
 
+
+typedef float f32;
+typedef int32_t i32;
+typedef uint32_t u32;
 
 int wst_min(int a, int b);
 float wst_minf(float a, float b);
@@ -53,24 +58,24 @@ typedef struct
   uint count;
   uint alloc_count;
   char* strings[1];
-} wst_string_array;
+} wst_strarr;
 
 
-wst_string_array* wst_string_array_new();
-void wst_string_array_delete(wst_string_array* arr);
-wst_string_array* wst_string_array_append(wst_string_array* arr, char* s);
-wst_string_array* wst_string_array_appendStrings(wst_string_array* arr, char** strings, int count);
-wst_string_array* wst_string_array_init(char** str_arr, int count);
-wst_string_array* wst_string_array_initWithString(wst_string_array* arr, char* s);
-uint wst_string_array_size(wst_string_array* arr);
-char* wst_string_array_at(wst_string_array* arr, uint index);
-char* wst_string_array_join(wst_string_array* arr, char* joinString);
-bool wst_string_array_containsSubString(wst_string_array* array, char* string);
-wst_string_array* wst_string_array_grep(wst_string_array* array, char* string);
-wst_string_array* wst_string_split(char* s, char c);
+wst_strarr* wst_strarr_new();
+void wst_strarr_delete(wst_strarr* arr);
+wst_strarr* wst_strarr_append(wst_strarr* arr, char* s);
+wst_strarr* wst_strarr_appendStrings(wst_strarr* arr, char** strings, int count);
+wst_strarr* wst_strarr_init(char** str_arr, int count);
+wst_strarr* wst_strarr_initWithString(wst_strarr* arr, char* s);
+uint wst_strarr_size(wst_strarr* arr);
+char* wst_strarr_at(wst_strarr* arr, uint index);
+char* wst_strarr_join(wst_strarr* arr, char* joinString);
+bool wst_strarr_containsSubString(wst_strarr* array, char* string);
+wst_strarr* wst_strarr_grep(wst_strarr* array, char* string);
+wst_strarr* wst_string_split(char* s, char c);
 char* wst_string_replace(char* s, char* subString, char* replaceString);
-wst_string_array* wst_system(char* cmd);
-wst_string_array* wst_readlines(char* fileName);
+wst_strarr* wst_system(char* cmd);
+wst_strarr* wst_readlines(char* fileName);
 
 /**
  * Display a menu using the dmenu command.
