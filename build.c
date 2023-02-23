@@ -12,24 +12,24 @@ int main(int argc, char** argv)
 
     char* executableName = wst_string_splitFromFront(argv[1], ".");
 
-    wst_string_array cmd = wst_string_array_new();
-    cmd = wst_string_array_append(cmd, "gcc");
+    wst_strarr* cmd = wst_strarr_new();
+    cmd = wst_strarr_append(cmd, "gcc");
 
     if (wst_string_endsWith(argv[0], "-debug"))
     {
         printf("Building for debug.\n");
-        cmd = wst_string_array_append(cmd, "-g");
+        cmd = wst_strarr_append(cmd, "-g");
     }
     else
     {
-        cmd = wst_string_array_append(cmd, "-O2");
+        cmd = wst_strarr_append(cmd, "-O2");
     }
 
-    cmd = wst_string_array_append(cmd, "-o");
-    cmd = wst_string_array_append(cmd, executableName);
-    cmd = wst_string_array_appendStrings(cmd, argv + 1, argc - 1);
+    cmd = wst_strarr_append(cmd, "-o");
+    cmd = wst_strarr_append(cmd, executableName);
+    cmd = wst_strarr_appendStrings(cmd, argv + 1, argc - 1);
 
-    system(wst_string_array_join(cmd, " "));
+    system(wst_strarr_join(cmd, " "));
 
     return 0;
 }
