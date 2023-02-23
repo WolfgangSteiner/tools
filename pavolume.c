@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string.h>
 #include "grv.h"
 #include "math.h"
 
