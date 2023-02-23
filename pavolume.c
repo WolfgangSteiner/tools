@@ -1,4 +1,4 @@
-#include "wst.h"
+#include "grv.h"
 #include "math.h"
 
 void print_error()
@@ -6,36 +6,48 @@ void print_error()
     printf("Usage: pavolume [inc|dec]\n");
 }
 
-float get_volume(char* sink_id)
+float get_volume(grv_str* sink_id)
 {
-    char* cmd = wst_string_concatenate("pactl get-sink-volume ", sink_id);
-    wst_strarr* result_arr = wst_system(cmd);
-    char* result = wst_strarr_at(result_arr, 0);
+    grv_str cmd = grv_str_new("pactl get-sink-volume ");
+    grv_str_append(&cmd, sink_id);
+    grv_strarr result_arr = grv_system(&cmd);
+    if (grv_strarr_size(&result_arr) == 0) {
+        grv_strarr_free(&result_arr);
+        grv_str_free(&cmd);
+        return 0.0f;
+    }
+    grv_str* result = grv_strarr_front(&result_arr);
     float cur_volume = 0.0f;
-    char* cur_volume_str = strrchr(result, '/');
-    sscanf(cur_volume_str + 2, "%f dB", &cur_volume);
-    wst_strarr_delete(result_arr);
-    free(cmd);
+    grv_str cur_volume_str = grv_str_split_tail_from_back(result, " / ");
+    cur_volume = grv_str_to_f32(&cur_volume_str);
+    grv_str_free(&cur_volume_str);
+    grv_strarr_free(&result_arr);
+    grv_str_free(&cmd);
     return cur_volume;
 }
 
-bool is_analog_headphones(char* sink_id)
+bool is_analog_headphones(grv_str* sink_id)
 {
     bool result = false;
-    if (wst_string_endsWith(sink_id, "analog-stereo"))
+    if (grv_str_ends_with_cstr(sink_id, "analog-stereo"))
     {
-        wst_strarr* result_arr = wst_system("pactl list sinks | grep Active");
-        result = wst_string_endsWith(wst_strarr_at(result_arr, 0), "headphones");
-        wst_strarr_delete(result_arr);
+        grv_strarr result_arr = grv_system_cstr("pactl list sinks | grep Active");
+        if (grv_strarr_size(&result_arr) > 0)
+        {
+            grv_str* result_str = grv_strarr_front(&result_arr);
+            result = grv_str_ends_with_cstr(result_str, "headphones");
+        }
+        grv_strarr_free(&result_arr);
     }
     return result;
 }
 
-char* get_active_sink()
+grv_str get_active_sink()
 {
-    wst_strarr* result_arr = wst_system("pactl get-default-sink");
-    char* result = wst_string_init(wst_strarr_at(result_arr, 0));
-    wst_strarr_delete(result_arr);
+    grv_str cmd = grv_str_new("pactl get-default-sink");
+    grv_strarr result_arr = grv_system(&cmd);
+    grv_str result = grv_strarr_pop_front(&result_arr);
+    grv_strarr_free(&result_arr);
     return result;
 }
 
@@ -58,9 +70,9 @@ int main(int argc, char** argv)
         return(-1);
     }   
 
-    char* sink_id = get_active_sink();
-    bool headphones = is_analog_headphones(sink_id);
-    f32 cur_volume = get_volume(sink_id);
+    grv_str sink_id = get_active_sink();
+    bool headphones = is_analog_headphones(&sink_id);
+    f32 cur_volume = get_volume(&sink_id);
     f32 min_volume = -60.0f;
     f32 max_volume = headphones ? -18.0f : 0.0f;
     f32 delta_volume = 3.0f;
@@ -80,9 +92,11 @@ int main(int argc, char** argv)
         value_str = "-3db";
     } 
 
-    char pactl_cmd[2048];
-    sprintf(pactl_cmd, "pactl set-sink-volume %s %s", sink_id, value_str);
-    wst_system(pactl_cmd);
+    grv_str pactl_cmd = grv_str_new("pactl set-sink-volume ");
+    grv_str_append(&pactl_cmd, &sink_id);
+    grv_str_append_cstr(&pactl_cmd, " ");
+    grv_str_append_cstr(&pactl_cmd, value_str);
+    grv_system(&pactl_cmd);
 
     return 0;
 }
