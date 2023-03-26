@@ -1,4 +1,4 @@
-#include "wst.h"
+#include <stdlib.h>
 
 int main()
 {
