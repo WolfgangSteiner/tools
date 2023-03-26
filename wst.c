@@ -416,7 +416,7 @@ wst_strarr* wst_strarr_grep(wst_strarr* array, char* string) {
   for (int i = 0; i < array->count; i++) {
     char* s = array->strings[i];
     if (wst_string_contains(s, string)) {
-      result = wst_strarr_append(result, wst_string_init(s));
+      result = wst_strarr_append(result, s);
     }
   }
 
@@ -440,9 +440,7 @@ wst_strarr* wst_string_split(char* s, char c) {
   currentChar = s[currentIndex];
   }
 
-//  if (currentStartIndex < currentIndex) {
   arr = wst_strarr_append(arr, wst_string_initFromRange(s, currentStartIndex, currentIndex));
-  }
 
   return arr;
 }

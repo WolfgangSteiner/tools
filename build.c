@@ -9,15 +9,14 @@ typedef struct {
 } build_settings;
 
 
-build_settings parse_args(int argc, char** argv)
-{
+build_settings parse_args(int argc, char** argv) {
     build_settings settings = {0};
     settings.args = grv_strarr_from_cstr_array(argv, argc);
     
     // get rid of the executable name
     grv_strarr_remove_front(&settings.args);
 
-    if (grv_str_starts_with_cstr(grv_strarr_front(&settings.args), "--debug"))  {
+    if (grv_str_starts_with_cstr(grv_strarr_front(&settings.args), "--debug")) {
         grv_strarr_remove_front(&settings.args);
         settings.debug = true;
     }
@@ -32,7 +31,6 @@ build_settings parse_args(int argc, char** argv)
     settings.executable_name = grv_str_split_head_from_front(grv_strarr_front(&settings.args), ".");
     return settings;
 }
-
 
 int main(int argc, char** argv) {
     build_settings settings = parse_args(argc, argv);
