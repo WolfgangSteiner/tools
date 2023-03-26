@@ -77,8 +77,10 @@ float getAverageChargingCurrent()
     if (batteryDischarging && batteryStatus == STATUS_CHR
         || !batteryDischarging && batteryStatus == STATUS_BAT)
     {
+        batteryStatus = batteryDischarging ? STATUS_BAT : STATUS_CHR;
         averageCurrent = FLT_MAX;
     }
+
 
     if (averageCurrent == FLT_MAX)
     {
@@ -117,12 +119,17 @@ char* batteryColor(float percent)
     return percent > 20 ? COLOR_GREEN : percent > 10 ? COLOR_YELLOW : COLOR_RED;
 }
 
+char* chargingColor(float percent)
+{
+    return percent > 90.0f ? COLOR_GREEN : COLOR_YELLOW;
+}
+
 char* formatBattery()
 {
     const float percent = getBatteryPercent();
-    char* batteryStatus;
-    char* result;
-    char* timeStr;
+    char* batteryStatus = NULL;
+    char* result = NULL;
+    char* timeStr = NULL;
 
     if (isBatteryDischarging())
     {
@@ -136,9 +143,13 @@ char* formatBattery()
     {
         batteryStatus = wst_string_format("CHR %.0f%%", percent);
         float t = getRemainingChargingTime();
-        timeStr = formatTime(t);
-        batteryStatus = wst_string_append(batteryStatus, timeStr);
-        result = formatStatusField(batteryStatus, COLOR_YELLOW);
+
+        if (percent < 100.0f)
+        {
+            timeStr = formatTime(t);
+            batteryStatus = wst_string_append(batteryStatus, timeStr);
+        }
+        result = formatStatusField(batteryStatus, chargingColor(percent));
     }
 
     wst_string_delete(timeStr);
