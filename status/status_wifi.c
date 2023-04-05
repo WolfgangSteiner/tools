@@ -2,7 +2,7 @@
 #include "status_wifi.h"
 #include "status_format.h"
 #include "status_colors.h"
-
+#include <stdio.h>
 
 bool hasWifiConnection() {
     wst_strarr* arr = wst_readlines("/proc/net/wireless");
@@ -56,6 +56,12 @@ char* getWifiSsid() {
     } else {
         ssid = wst_string_init("???");
     }
+
+    if (wst_string_startsWith(ssid, "AuroraBorealis")) {
+        wst_string_delete(ssid);
+        ssid = wst_string_init("W");
+    }
+
     wst_strarr_delete(arr2);
     wst_strarr_delete(arr);
     return ssid;
@@ -65,7 +71,9 @@ char* formatWifiStatus() {
     if (hasWifiConnection()) {
         const float wifiQuality = getWifiQuality();
         char* wifiStr = getWifiSsid();
-        char* qualityStr = wst_formatPercentBar(wifiQuality, 1, "( -+*#)");
+        char* qualityStr = malloc(10);
+        //char* qualityStr = wst_formatPercentBar(wifiQuality, 1, "[123456789]");
+        snprintf(qualityStr, 10, " %.0f%%", wifiQuality);
         wifiStr = wst_string_append(wifiStr, qualityStr);
         char* result = formatStatusField(wifiStr, getWifiColor(wifiQuality));
         wst_string_delete(qualityStr);

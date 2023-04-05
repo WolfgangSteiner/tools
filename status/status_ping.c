@@ -78,7 +78,7 @@ char* formatPing() {
     if (s_pingValue == MAX_PING) {
         return formatStatusField("------", "#ff0000");
     } else {
-        char* pingTimeStr = wst_string_format("%3.0f ms", s_pingValue);
+        char* pingTimeStr = wst_string_format("%2.0f ms", s_pingValue);
         char* result = formatStatusField(pingTimeStr, pingColor(s_pingValue, s_missedPings));
         wst_string_delete(pingTimeStr);
         return result;

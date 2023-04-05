@@ -105,18 +105,18 @@ char* formatBattery() {
     char* timeStr = NULL;
 
     if (isBatteryDischarging()) {
-        batteryStatus = wst_string_format("BAT %.0f%%", percent);
+        batteryStatus = wst_string_format("BAT %02.0f%%", percent);
         float t = getRemainingBatteryTime();
         timeStr = formatTime(t);
-        batteryStatus = wst_string_append(batteryStatus, timeStr);
+        // batteryStatus = wst_string_append(batteryStatus, timeStr);
         result = formatStatusField(batteryStatus, batteryColor(percent));
     } else {
-        batteryStatus = wst_string_format("CHR %.0f%%", percent);
+        batteryStatus = wst_string_format("CHR %02.0f%%", percent);
         float t = getRemainingChargingTime();
 
         if (percent < 100.0f) {
             timeStr = formatTime(t);
-            batteryStatus = wst_string_append(batteryStatus, timeStr);
+            // batteryStatus = wst_string_append(batteryStatus, timeStr);
         }
         result = formatStatusField(batteryStatus, chargingColor(percent));
     }
