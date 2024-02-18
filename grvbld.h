@@ -42,6 +42,7 @@ GRVBLD_INLINE char* concatenate_arguments(int argc, char** argv) {
 //==============================================================================
 // default main function
 //==============================================================================
+#if 0
 #ifndef GRV_BUILD_CONFIGURED
 int main(int argc, char** argv) {
     int result = system("gcc -g -o bld -DGRV_BUILD_CONFIGURED bld.c");
@@ -52,7 +53,7 @@ int main(int argc, char** argv) {
     system(concatenate_arguments(argc, argv));
 }
 #endif
-
+#endif
 
 //==============================================================================
 // grvbld_cstr
@@ -103,7 +104,7 @@ GRVBLD_INLINE bool grvbld_is_file_newer_than(char* filename, char* other_filenam
 }
 
 GRVBLD_INLINE bool is_source_file_newer(char* exe_filename) {
-    char* src_filename = grvbld_cstr_cat3("src/", exe_filename, ".c");
+    char* src_filename = grvbld_cstr_cat(exe_filename, ".c");
     bool result = grvbld_is_file_newer_than(src_filename, exe_filename);
     result = result || grvbld_is_file_newer_than("src/grvbld.c", exe_filename);
     result = result || grvbld_is_file_newer_than("include/grv/grvbld.h", exe_filename);
@@ -134,11 +135,10 @@ GRVBLD_INLINE void log_error(char* fmt, ...) {
 }
 
 GRVBLD_INLINE int rebuild_file(char* filename) {
-    char* src = grvbld_cstr_cat3("src/", filename, ".c");
+    char* src = grvbld_cstr_cat(filename, ".c");
     char* cmd = grvbld_cstr_cat("gcc -o ", filename);
     cmd = grvbld_cstr_append(cmd, " -DGRV_BUILD_CONFIGURED -Iinclude ");
     cmd = grvbld_cstr_append(cmd, src);
-    cmd = grvbld_cstr_append(cmd, " src/grvbld.c");
     log_info("Rebuilding %s:", filename);
     log_info("%s", cmd);
     int result = system(cmd);
