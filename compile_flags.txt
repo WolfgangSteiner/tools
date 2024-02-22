@@ -1,0 +1,4 @@
+-I.
+-I./grv/include
+-std=gnu11
+
