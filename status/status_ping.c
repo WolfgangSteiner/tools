@@ -1,9 +1,6 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "wst.h"
-#include "status_ping.h"
-#include "status_colors.h"
-#include "status_format.h"
 
 enum TNetworkStatus {
     KNetworkUnreachable,

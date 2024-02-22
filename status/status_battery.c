@@ -1,9 +1,6 @@
 #include <float.h>
 #include <math.h>
 #include "wst.h"
-#include "status_format.h"
-#include "status_colors.h"
-
 
 char* readStringFromFile(char* fileName) {
     wst_strarr* arr = wst_readlines(fileName);

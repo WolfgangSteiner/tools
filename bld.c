@@ -12,6 +12,11 @@ int main(int argc, char** argv) {
     grvbld_target_add_src(battery_watch, "../grv/src/grv.c");
     grvbld_build_target(config, battery_watch);
 
+    grvbld_target_t* status = grvbld_target_create("status", GRVBLD_EXECUTABLE);
+    grvbld_target_add_src(status, "status/status.c");
+    grvbld_target_add_src(status, "wst.c");
+    grvbld_target_add_src(status, "grv/src/grv.c");
+    grvbld_build_target(config, status);
     return 0;
 }
 

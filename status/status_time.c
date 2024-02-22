@@ -1,7 +1,5 @@
-#include "status_colors.h"
 #include "wst.h"
 #include "time.h"
-#include "status_format.h"
 #include "grv/grv_str.h"
 
 grv_str_t format_day_of_month(struct tm* t) {
