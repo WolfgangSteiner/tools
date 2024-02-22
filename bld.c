@@ -16,5 +16,11 @@ int main(int argc, char** argv) {
     grvbld_target_add_src(status, "wst.c");
     grvbld_target_add_src(status, "grv/src/grv.c");
     grvbld_build_target(config, status);
+
+    grvbld_target_t* dim = grvbld_target_create("dim", GRVBLD_EXECUTABLE);
+    grvbld_target_add_src(dim, "dim.c");
+    grvbld_target_add_src(dim, "grv/src/grv.c");
+    grvbld_build_target(config, dim);
+
     return 0;
 }
