@@ -312,7 +312,7 @@ char* wst_string_getColumn(char* s, int col) {
 }
 
 
-wst_strarr* wst_strarr_new() {
+wst_strarr* wst_strarr_new(void) {
   uint ALLOC_SIZE = sizeof(wst_strarr) + sizeof(char*) * (WST_STRING_ARRAY_ALLOC_SIZE_DEFAULT - 1);
   wst_strarr* arr = malloc(ALLOC_SIZE);
   memset(arr, 0, ALLOC_SIZE);
@@ -548,5 +548,6 @@ char* wst_formatPercentBar(float percent, int numSegments, char* symbols) {
   }
 
   result = wst_string_appendChar(result, symbols[numSymbols + 1]);
+  return result;
 }
 

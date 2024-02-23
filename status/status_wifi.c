@@ -2,7 +2,7 @@
 #include "grv/grv.h"
 #include <stdio.h>
 
-bool hasWifiConnection() {
+bool hasWifiConnection(void) {
     wst_strarr* arr = wst_readlines("/proc/net/wireless");
     bool result = wst_strarr_containsSubString(arr, "wlp")
 	    || wst_strarr_containsSubString(arr, "wlan0");
@@ -15,7 +15,7 @@ static bool starts_with_wlp(grv_str_t str) {
     return grv_str_starts_with_cstr(str, "wlp") || grv_str_starts_with_cstr(str, "wlan"); 
 }
 
-float parse_wifi_signal_level() {
+float parse_wifi_signal_level(void) {
     grv_strarr_t arr = grv_readlines(grv_str_ref("/proc/net/wireless"));
     //grv_strarr_t arr = grv_readlines(grv_str_ref("/tmp/test.txt"));
     grv_strarr_t arr2 = grv_strarr_filter(arr, starts_with_wlp);
@@ -34,7 +34,7 @@ float parse_wifi_signal_level() {
     return result;
 }
 
-float get_wifi_quality() {
+float get_wifi_quality(void) {
     const float NOISE_FLOOR_DBM = -100.0f;
     const float SIGNAL_MAX_DBM = -50.0f;
     float xbm = parse_wifi_signal_level();
@@ -46,7 +46,7 @@ char* get_wifi_color(float quality) {
     return quality >= 50.0f ? COLOR_GREEN : quality >= 25.0f ? COLOR_YELLOW : COLOR_RED;
 }
 
-char* get_wifi_ssid() {
+char* get_wifi_ssid(void) {
     wst_strarr* arr = wst_system("nmcli con show --active");
     wst_strarr* arr2 = wst_strarr_grep(arr, "wifi");
     char* ssid;
@@ -66,7 +66,7 @@ char* get_wifi_ssid() {
     return ssid;
 }
 
-char* formatWifiStatus() {
+char* formatWifiStatus(void) {
     if (hasWifiConnection()) {
         const float wifi_quality = get_wifi_quality();
         char* ssid = get_wifi_ssid();

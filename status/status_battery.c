@@ -24,39 +24,39 @@ float readFloatFromFile(char* fileName) {
     }
 }
 
-bool isBatteryDischarging() {
+bool isBatteryDischarging(void) {
     char* str = readStringFromFile("/sys/class/power_supply/BAT0/status");
     bool result = wst_string_equal(str, "Discharging");
     wst_string_delete(str);
     return result;
 }
 
-float getFullBatteryCharge() {
+float getFullBatteryCharge(void) {
     return readFloatFromFile("/sys/class/power_supply/BAT0/charge_full");
 }
 
-float getCurrentBatteryCharge() {
+float getCurrentBatteryCharge(void) {
     return readFloatFromFile("/sys/class/power_supply/BAT0/charge_now");
 }
 
-float getBatteryPercent() {
+float getBatteryPercent(void) {
     return getCurrentBatteryCharge() / getFullBatteryCharge() * 100.0f;
 }
 
-float getChargingCurrent() {
+float getChargingCurrent(void) {
     return readFloatFromFile("/sys/class/power_supply/BAT0/current_now");
 }
 
 enum TBatStatus { STATUS_INIT, STATUS_BAT, STATUS_CHR }; 
 
-float getAverageChargingCurrent() {
+float getAverageChargingCurrent(void) {
     static float averageCurrent = FLT_MAX;
     static enum TBatStatus batteryStatus = STATUS_INIT;
 
     const bool batteryDischarging = isBatteryDischarging();
 
-    if (batteryDischarging && batteryStatus == STATUS_CHR
-        || !batteryDischarging && batteryStatus == STATUS_BAT) {
+    if ((batteryDischarging && batteryStatus == STATUS_CHR)
+        || (!batteryDischarging && batteryStatus == STATUS_BAT)) {
         batteryStatus = batteryDischarging ? STATUS_BAT : STATUS_CHR;
         averageCurrent = FLT_MAX;
     }
@@ -72,11 +72,11 @@ float getAverageChargingCurrent() {
     return averageCurrent;
 }
 
-float getRemainingBatteryTime() {
+float getRemainingBatteryTime(void) {
     return getCurrentBatteryCharge() / getAverageChargingCurrent();
 }
 
-float getRemainingChargingTime() {
+float getRemainingChargingTime(void) {
     float remainingCharge = getFullBatteryCharge() - getCurrentBatteryCharge();
     return remainingCharge / getAverageChargingCurrent();
 }
@@ -95,7 +95,7 @@ char* chargingColor(float percent) {
     return percent > 90.0f ? COLOR_GREEN : COLOR_YELLOW;
 }
 
-char* formatBattery() {
+char* formatBattery(void) {
     const float percent = getBatteryPercent();
     char* batteryStatus = NULL;
     char* result = NULL;

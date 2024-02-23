@@ -32,7 +32,7 @@ char* wst_string_appendRange(char* s1, char* s2, uint count);
 char* wst_string_join(char* s1, char* s2, char* join_string);
 uint wst_string_length(char* s);
 char* wst_string_initFromRange(char* s, uint start, uint end);
-char* wst_string_new();
+char* wst_string_new(void);
 void wst_string_delete(char* s);
 char* wst_string_alloc(uint size);
 void wst_string_clear(char* s);
@@ -61,7 +61,7 @@ typedef struct
 } wst_strarr;
 
 
-wst_strarr* wst_strarr_new();
+wst_strarr* wst_strarr_new(void);
 void wst_strarr_delete(wst_strarr* arr);
 wst_strarr* wst_strarr_append(wst_strarr* arr, char* s);
 wst_strarr* wst_strarr_appendStrings(wst_strarr* arr, char** strings, int count);

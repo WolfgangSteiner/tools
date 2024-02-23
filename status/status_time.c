@@ -15,17 +15,17 @@ grv_str_t format_day_of_month(struct tm* t) {
 
 grv_str_t format_day_of_week(struct tm* t) {
     char buffer[64];
-    size_t len = strftime(buffer, 64, "%a", t);
+    strftime(buffer, 64, "%a", t);
     return grv_str_new(buffer);
 }
 
 grv_str_t format_hours_minutes(struct tm* t) {
     char buffer[64];
-    size_t len = strftime(buffer, 64, "%H:%M", t);
+    strftime(buffer, 64, "%H:%M", t);
     return grv_str_new(buffer);
 }
 
-char* formatCurrentTime() {
+char* formatCurrentTime(void) {
     time_t now = time(0);
     struct tm* t = localtime(&now);
 

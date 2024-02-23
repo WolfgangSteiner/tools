@@ -17,7 +17,7 @@ void write_level(s32 level) {
     fclose(fp);
 }
 
-s32 read_level() {
+s32 read_level(void) {
     int level = 10;
     grv_str_t dim_file_expanded = grv_expand_tilde(grv_str_ref(dim_file));
     FILE* fp = fopen(grv_str_cstr(dim_file_expanded), "r");
@@ -25,12 +25,12 @@ s32 read_level() {
     return level;
 }
 
-s32 get_level_for_current_time() {
+s32 get_level_for_current_time(void) {
     f32 time = grv_local_time_f32();
     return grv_is_in_range_f32(time, 7, 18) ? 9 : grv_is_in_range_f32(time, 19, 21) ? 3 : 1;
 }
 
-void print_usage() {
+void print_usage(void) {
     printf("Usage: dim LEVEL\n");
     printf("LEVEL must be an integer between 0 and %d\n", MAX_LEVEL);
     exit(1);

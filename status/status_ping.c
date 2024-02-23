@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "wst.h"
+#include "grv/grv_common.h"
 
 enum TNetworkStatus {
     KNetworkUnreachable,
@@ -20,20 +21,20 @@ void updatePingValue(float pingValue) {
         s_networkStatus = KNetworkReachable;
         s_missedPings = 0;
     } else {
-        const float a = abs(pingValue - s_pingValue) > 20.0f ? 0.5f : 0.1f;
+        const float a = grv_abs_f32(pingValue - s_pingValue) > 20.0f ? 0.5f : 0.1f;
         s_pingValue += a * (pingValue - s_pingValue);
     }
 }
 
-void decrementMissedPings() {
+void decrementMissedPings(void) {
     s_missedPings = wst_max(0, s_missedPings - 1); 
 }
 
-void incrementMissedPings() {
+void incrementMissedPings(void) {
     s_missedPings = wst_min(MAX_MISSED_PINGS, s_missedPings + 1);
 }
 
-void setNetworkUnreachable() {
+void setNetworkUnreachable(void) {
     s_pingValue = MAX_PING;
     s_missedPings = MAX_MISSED_PINGS;
     s_networkStatus = KNetworkUnreachable;
@@ -71,7 +72,7 @@ char* pingColor(float pingValue, int missedPings) {
     }
 }
 
-char* formatPing() {
+char* formatPing(void) {
     if (s_pingValue == MAX_PING) {
         return formatStatusField("------", "#ff0000");
     } else {
@@ -82,7 +83,7 @@ char* formatPing() {
     }
 }
 
-void startPingThread() {
+void startPingThread(void) {
     pthread_t pingThread;
     pthread_create(&pingThread, 0, pingThreadFunc, 0);
 }
