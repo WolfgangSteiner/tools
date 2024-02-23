@@ -35,6 +35,7 @@ int main(int argc, char** argv) {
     build_exe("dim");
     build_exe("fzvim");
     build_exe("agfzf");
+    build_exe("youtube-to-mp3");
 
     return 0;
 }
