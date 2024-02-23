@@ -1,26 +1,40 @@
 #include "grv/grvbld.h"
 
-int main(int argc, char** argv) {
-    GRV_CHECK_AND_REBUILD();    
+static grvbld_config_t* config = 0;
+
+grvbld_config_t* create_config(int argc, char** argv) {
     grvbld_config_t* config =  grvbld_config_new(argc, argv);
     grvbld_config_add_include_directory(config, "grv/include");
     grvbld_config_add_include_directory(config, ".");
-    
-    grvbld_target_t* battery_watch = grvbld_target_create("battery_watch", GRVBLD_EXECUTABLE);
-    grvbld_target_add_src(battery_watch, "battery_watch.c");
-    grvbld_target_add_src(battery_watch, "grv/src/grv.c");
-    grvbld_build_target(config, battery_watch);
+    return config;
+}
 
-    grvbld_target_t* status = grvbld_target_create("status", GRVBLD_EXECUTABLE);
+grvbld_target_t* make_target(char* name) {
+    grvbld_target_t* target = grvbld_target_create(name, GRVBLD_EXECUTABLE);
+    grvbld_target_add_src(target, "grv/src/grv.c");
+    return target;
+}
+
+void build_exe(char* name) {
+    grvbld_target_t* target = make_target(name);
+    char* src = grvbld_cstr_cat(name, ".c");
+    grvbld_target_add_src(target, src);
+    grvbld_build_target(config, target);
+}
+
+int main(int argc, char** argv) {
+    GRV_CHECK_AND_REBUILD();    
+    config = create_config(argc, argv);
+
+    grvbld_target_t* status = make_target("status");
     grvbld_target_add_src(status, "status/status.c");
     grvbld_target_add_src(status, "wst.c");
-    grvbld_target_add_src(status, "grv/src/grv.c");
     grvbld_build_target(config, status);
 
-    grvbld_target_t* dim = grvbld_target_create("dim", GRVBLD_EXECUTABLE);
-    grvbld_target_add_src(dim, "dim.c");
-    grvbld_target_add_src(dim, "grv/src/grv.c");
-    grvbld_build_target(config, dim);
+    build_exe("battery_watch");
+    build_exe("dim");
+    build_exe("fzvim");
+    build_exe("agfzf");
 
     return 0;
 }
