@@ -1,4 +1,4 @@
-#include "grv/grv_strarr.h"
+#include "grv/grv.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -8,7 +8,12 @@
 #define COLOR_GREEN  "#00ff00"
 #define COLOR_WHITE  "#ffffff"
 
-#include "status_format.c"
+static char* formatStatusField(char* text, char* color) {
+    char* formatString = "{\"full_text\":\" %s \",\"color\":\"%s\"}";
+    char* result = grv_cstr_new_with_format(formatString, text, color);
+    return result;
+}
+
 #include "status_battery.c"
 #include "status_ping.c"
 #include "status_time.c"

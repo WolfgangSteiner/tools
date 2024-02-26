@@ -1,6 +1,9 @@
 #include <unistd.h>
 #include <pthread.h>
-#include "wst.h"
+#include "grv/grv_cstr.h"
+#include "grv/grv_str.h"
+#include "grv/grv_util.h"
+#include "grv/grv_log.h"
 #include "grv/grv_common.h"
 
 enum TNetworkStatus {
@@ -27,11 +30,11 @@ void updatePingValue(float pingValue) {
 }
 
 void decrementMissedPings(void) {
-    s_missedPings = wst_max(0, s_missedPings - 1); 
+    s_missedPings = grv_max_s32(0, s_missedPings - 1); 
 }
 
 void incrementMissedPings(void) {
-    s_missedPings = wst_min(MAX_MISSED_PINGS, s_missedPings + 1);
+    s_missedPings = grv_min_s32(MAX_MISSED_PINGS, s_missedPings + 1);
 }
 
 void setNetworkUnreachable(void) {
@@ -41,23 +44,20 @@ void setNetworkUnreachable(void) {
 }
 
 void* pingThreadFunc(void* userData) {
-    char* start;
-    char* timeToken = "time=";
-
+    grv_str_t time_token = grv_str_ref("time=");
     while (true) {
-        wst_strarr* arr = wst_system("ping -c 1 -W 0.5 1.1.1.1");
-
-        if (arr->count == 0 || wst_string_contains(arr->strings[0], "unreachable")) {
+        grv_strarr_t arr = grv_system_with_capture_cstr("ping -c 1 -W 0.5 1.1.1.1");
+        if (arr.size < 2 || grv_str_contains_cstr(arr.arr[0], "unreachable")) {
             setNetworkUnreachable();
-        } else if (start = strstr(arr->strings[1], timeToken)) {
-            const float newPingValue = strtof(start + strlen(timeToken), 0);
-            updatePingValue(newPingValue);
+        } else if (grv_str_contains_str(*grv_strarr_at(arr, 1), time_token)) {
+            grv_str_t response = *grv_strarr_at(arr, 1);
+            const float new_ping_value = grv_str_to_f32(grv_str_split_tail_from_front(response, time_token));
+            updatePingValue(new_ping_value);
             decrementMissedPings();
         } else {
             incrementMissedPings();
         }
-
-        wst_strarr_delete(arr);
+        grv_strarr_free(&arr);
         sleep(1);
     }
 }
@@ -76,9 +76,9 @@ char* formatPing(void) {
     if (s_pingValue == MAX_PING) {
         return formatStatusField("------", "#ff0000");
     } else {
-        char* pingTimeStr = wst_string_format("%2.0f ms", s_pingValue);
-        char* result = formatStatusField(pingTimeStr, pingColor(s_pingValue, s_missedPings));
-        wst_string_delete(pingTimeStr);
+        grv_str_t ping_time_str = grv_str_format(grv_str_ref("{f32:2.0}ms"), s_pingValue);
+        char* result = formatStatusField(grv_str_cstr(ping_time_str), pingColor(s_pingValue, s_missedPings));
+        grv_str_free(&ping_time_str);
         return result;
     }
 }
