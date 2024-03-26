@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
     build_exe("agfzf");
     build_exe("psfzf");
     build_exe("youtube-to-mp3");
+    build_exe("pwgen");
 
     return 0;
 }
