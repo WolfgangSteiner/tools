@@ -30,11 +30,11 @@ void updatePingValue(float pingValue) {
 }
 
 void decrementMissedPings(void) {
-    s_missedPings = grv_max_s32(0, s_missedPings - 1); 
+    s_missedPings = grv_max_i32(0, s_missedPings - 1); 
 }
 
 void incrementMissedPings(void) {
-    s_missedPings = grv_min_s32(MAX_MISSED_PINGS, s_missedPings + 1);
+    s_missedPings = grv_min_i32(MAX_MISSED_PINGS, s_missedPings + 1);
 }
 
 void setNetworkUnreachable(void) {

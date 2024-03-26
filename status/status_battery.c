@@ -3,17 +3,18 @@
 
 float readFloatFromFile(char* filename) {
     float result = 0.0f;
-    grv_str_t str = grv_read_file(grv_str_ref(filename));
-    grv_str_t str_str = grv_str_strip_char(str, '\n');
-    if (grv_str_is_float(str_str)) {
-        result = grv_str_to_f32(str_str);
+    grv_str_return_t res = grv_read_file(grv_str_ref(filename));
+    grv_str_t str = grv_str_strip_char(res.str, '\n');
+    if (grv_str_is_float(str)) {
+        result = grv_str_to_f32(str);
     }
     grv_str_free(&str);
     return result;
 }
 
 bool isBatteryDischarging(void) {
-    grv_str_t status_str = grv_read_file(grv_str_ref("/sys/class/power_supply/BAT0/status"));
+    grv_str_return_t res = grv_read_file(grv_str_ref("/sys/class/power_supply/BAT0/status"));
+    grv_str_t status_str = res.str;
     bool result = grv_str_starts_with_cstr(status_str, "Discharging");
     grv_str_free(&status_str);
     return result;
@@ -71,8 +72,8 @@ float getRemainingChargingTime(void) {
 }
 
 grv_str_t formatTime(float time) {
-    s32 hours = time;
-    s32 minutes = (time - hours) * 60;
+    i32 hours = time;
+    i32 minutes = (time - hours) * 60;
     return grv_str_format(grv_str_ref(" {int}:{int:02}"), hours, minutes);
 }
 

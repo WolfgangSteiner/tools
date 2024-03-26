@@ -12,14 +12,16 @@ static int danger_percent = 10;
 static int critical_percent = 5;
 
 bool is_battery_discharging(void) {
-    grv_str_t status = grv_read_file(grv_str_ref("/sys/class/power_supply/BAT0/status"));
+    grv_str_return_t res = grv_read_file(grv_str_ref("/sys/class/power_supply/BAT0/status"));
+    grv_str_t status = res.str;
     bool discharging = grv_str_starts_with_cstr(status, "Discharging");
     grv_str_free(&status);
     return discharging;
 }
 
 int get_capacity(void) {
-    grv_str_t capacity_str = grv_read_file(grv_str_ref("/sys/class/power_supply/BAT0/capacity"));
+    grv_str_return_t res = grv_read_file(grv_str_ref("/sys/class/power_supply/BAT0/capacity"));
+    grv_str_t capacity_str = res.str;
     int capacity = grv_str_to_int(capacity_str);
     printf("capacity: %d\n", capacity);
     grv_str_free(&capacity_str);

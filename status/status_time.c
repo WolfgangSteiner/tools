@@ -2,7 +2,7 @@
 #include "grv/grv_str.h"
 
 grv_str_t format_day_of_month(struct tm* t) {
-    s32 day = t->tm_mday;
+    i32 day = t->tm_mday;
     char* suffix = 
         day == 1 || day == 21 || day == 31 ? "st" :
         day == 2 || day == 22 ? "nd" :
