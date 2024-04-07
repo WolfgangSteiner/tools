@@ -28,7 +28,6 @@ int main(int argc, char** argv) {
 
     grvbld_target_t* status = make_target("status");
     grvbld_target_add_src(status, "status/status.c");
-    grvbld_target_add_src(status, "wst.c");
     grvbld_build_target(config, status);
 
     build_exe("battery_watch");
