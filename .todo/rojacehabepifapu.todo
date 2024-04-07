@@ -1,0 +1,4 @@
+[status] move battery time computation into separate thread
+[[type todo]]
+[[status open]]
+[[created 20240406T215031]]
