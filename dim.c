@@ -7,7 +7,7 @@ i32 temp_levels[MAX_LEVEL+1] = { 1500, 1500, 1500, 2000, 2500, 3000, 3500, 4000,
 char* dim_file = "~/.dim";
 
 void write_level(i32 level) {
-    grv_str_t dim_file_expanded = grv_expand_tilde(grv_str_ref(dim_file));
+    grv_str_t dim_file_expanded = grv_path_expand_tilde(grv_str_ref(dim_file));
     FILE* fp = fopen(grv_str_cstr(dim_file_expanded), "w");
     if (!fp) {
         grv_log_error(grv_str_ref("Could not open ~/.dim for writing"));
@@ -19,7 +19,7 @@ void write_level(i32 level) {
 
 i32 read_level(void) {
     int level = 10;
-    grv_str_t dim_file_expanded = grv_expand_tilde(grv_str_ref(dim_file));
+    grv_str_t dim_file_expanded = grv_path_expand_tilde(grv_str_ref(dim_file));
     FILE* fp = fopen(grv_str_cstr(dim_file_expanded), "r");
     fp && fscanf(fp, "%d", &level);
     return level;
