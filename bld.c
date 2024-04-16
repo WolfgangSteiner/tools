@@ -12,7 +12,7 @@ grvbld_config_t* create_config(int argc, char** argv) {
 
 void build_exe(char* name) {
     grvbld_target_t* target = grvbld_target_create_executable(name);
-    char* src = grvbld_cstr_cat(name, ".c");
+    char* src = grvbld_cstr_new_with_format("src/%s.c", name); 
     grvbld_target_add_src(target, src);
     grvbld_target_link(target, libgrv);
     grvbld_build_target(config, target);
@@ -29,11 +29,6 @@ int main(int argc, char** argv) {
     config = create_config(argc, argv);
     build_grv();
 
-    grvbld_target_t* status = grvbld_target_create_executable("status");
-    grvbld_target_add_src(status, "status/status.c");
-    grvbld_target_link(status, libgrv);
-    grvbld_build_target(config, status);
-
     build_exe("battery_watch");
     build_exe("dim");
     build_exe("fzvim");
@@ -41,6 +36,7 @@ int main(int argc, char** argv) {
     build_exe("psfzf");
     build_exe("youtube-to-mp3");
     build_exe("pwgen");
+    build_exe("status");
 
     return 0;
 }

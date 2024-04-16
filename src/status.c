@@ -14,10 +14,10 @@ static char* formatStatusField(char* text, char* color) {
     return result;
 }
 
-#include "status_battery.c"
-#include "status_ping.c"
-#include "status_time.c"
-#include "status_wifi.c"
+#include "status/status_battery.c"
+#include "status/status_ping.c"
+#include "status/status_time.c"
+#include "status/status_wifi.c"
 
 int main(int argc, char** argv) {
     grv_strarr_t args = grv_strarr_new_from_cstrarr(argv + 1, argc - 1);
