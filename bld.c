@@ -38,6 +38,7 @@ int main(int argc, char** argv) {
     build_exe("pwgen");
     build_exe("status");
     build_exe("sleep_watch");
+    build_exe("cheat");
 
     return 0;
 }
