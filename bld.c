@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
     build_exe("youtube-to-mp3");
     build_exe("pwgen");
     build_exe("status");
+    build_exe("sleep_watch");
 
     return 0;
 }
