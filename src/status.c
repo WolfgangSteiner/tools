@@ -25,6 +25,7 @@ int main(int argc, char** argv) {
     grv_strarr_free(&args);
 
     startPingThread();
+    start_charging_current_thread();
 
     printf("{\"version\":1}\n");
     printf("[\n");

@@ -1,5 +1,7 @@
 #include <float.h>
+#include <pthread.h>
 #include "grv/grv.h"
+#include "grv/grv_base.h"
 
 float readFloatFromFile(char* filename) {
     float result = 0.0f;
@@ -40,10 +42,11 @@ float getChargingCurrent(void) {
 
 enum TBatStatus { STATUS_INIT, STATUS_BAT, STATUS_CHR }; 
 
-float getAverageChargingCurrent(void) {
-    static float averageCurrent = FLT_MAX;
-    static enum TBatStatus battery_status = STATUS_INIT;
+static float averageCurrent = FLT_MAX;
+static enum TBatStatus battery_status = STATUS_INIT;
 
+void* update_average_charging_current(void* user_data) {
+    GRV_UNUSED(user_data);
     const bool batteryDischarging = isBatteryDischarging();
 
     if ((batteryDischarging && battery_status == STATUS_CHR)
@@ -59,16 +62,22 @@ float getAverageChargingCurrent(void) {
         float a = 0.05;
         averageCurrent += a * diff;
     }
-    return averageCurrent;
+    usleep(500000);
+    return NULL;
+}
+
+void start_charging_current_thread(void) {
+    pthread_t charging_current_thread;
+    pthread_create(&charging_current_thread, 0, update_average_charging_current, 0);
 }
 
 float getRemainingBatteryTime(void) {
-    return getCurrentBatteryCharge() / getAverageChargingCurrent();
+    return getCurrentBatteryCharge() / averageCurrent;
 }
 
 float getRemainingChargingTime(void) {
     float remainingCharge = getFullBatteryCharge() - getCurrentBatteryCharge();
-    return remainingCharge / getAverageChargingCurrent();
+    return remainingCharge / averageCurrent;
 }
 
 grv_str_t formatTime(float time) {
