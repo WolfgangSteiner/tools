@@ -28,12 +28,12 @@ f32 unlock_interval(f32 time) {
 }
 
 int main(void) {
-    render_lock_image();
     f32 last_timestamp = -1.0f;
     while (true) {
         f32 time = grv_local_time_f32();
         if (time >= 22.5f || time < 5.0f) {
             if (last_timestamp < 0.0f || (last_timestamp > 0 && time - last_timestamp > unlock_interval(time))) {
+                render_lock_image();
                 system("i3lock --nofork --color=222222 -i /tmp/sleep_watch.png");
                 last_timestamp = grv_local_time_f32();
             }
