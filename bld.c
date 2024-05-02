@@ -39,6 +39,7 @@ int main(int argc, char** argv) {
     build_exe("status");
     build_exe("sleep_watch");
     build_exe("cheat");
+    build_exe("paceconv");
 
     return 0;
 }
