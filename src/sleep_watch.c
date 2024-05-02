@@ -1,6 +1,9 @@
 #include "grv/grv.h"
 #include "grv/grv_util.h"
 
+#define SOFT_CUTOFF 22.0f
+#define HARD_CUTOFF 22.5f
+
 void render_lock_image(void) {
     char* text = "time to sleep";
     char* output_image = "/tmp/sleep_watch.png";
@@ -18,9 +21,9 @@ void render_lock_image(void) {
 }
 
 f32 unlock_interval(f32 time) {
-    if (time >= 23.0f) {
+    if (time >= HARD_CUTOFF) {
         return 1.0f/60.0f;
-    } else if (time >= 22.5f) {
+    } else if (time >= SOFT_CUTOFF) {
         return 5.0f/60.0f;
     } else {
         return 1.0f;
@@ -31,7 +34,7 @@ int main(void) {
     f32 last_timestamp = -1.0f;
     while (true) {
         f32 time = grv_local_time_f32();
-        if (time >= 22.5f || time < 5.0f) {
+        if (time >= SOFT_CUTOFF || time < 5.0f) {
             if (last_timestamp < 0.0f || (last_timestamp > 0 && time - last_timestamp > unlock_interval(time))) {
                 render_lock_image();
                 system("i3lock --nofork --color=222222 -i /tmp/sleep_watch.png");
