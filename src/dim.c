@@ -1,8 +1,8 @@
 #include "grv/grv.h"
 
-#define MAX_LEVEL 10
-f32 brightness_levels[MAX_LEVEL+1] = { 0.25, 0.5, 1, 1, 1, 1, 10, 25, 50, 100, 100 };
-i32 temp_levels[MAX_LEVEL+1] = { 1500, 1500, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500 };
+#define MAX_LEVEL 13
+f32 brightness_levels[MAX_LEVEL+1] = { 0.25,  0.5,    1,    1,    1,    1,   10,   25,   50,   60,   70,   80,   90,  100 };
+i32 temp_levels[MAX_LEVEL+1] =       { 1500, 1500, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5000, 5500, 5500, 5500 };
 
 char* dim_file = "~/.dim";
 
@@ -27,7 +27,7 @@ i32 read_level(void) {
 
 i32 get_level_for_current_time(void) {
     f32 time = grv_local_time_f32();
-    return grv_is_in_range_f32(time, 7, 18) ? 9 : grv_is_in_range_f32(time, 19, 21) ? 3 : 1;
+    return grv_is_in_range_f32(time, 7, 18) ? MAX_LEVEL : grv_is_in_range_f32(time, 19, 21) ? 3 : 1;
 }
 
 void print_usage(void) {
