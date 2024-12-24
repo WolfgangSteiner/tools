@@ -13,7 +13,7 @@ void render_lock_image(void) {
     char* text_color="#888888";
     char* background_color="#222222";
     char* cmd = grv_cstr_new_with_format(
-        "convert -size %dx%d -background \"%s\" -fill \"%s\" -font Courier -pointsize 72 -gravity Center label:\"%s\" %s",
+        "convert -size %dx%d -background \"%s\" -fill \"%s\" -pointsize 144 -gravity Center label:\"%s\" %s",
         width, height, background_color, text_color, text, output_image);
     //grv_log_info(grv_str_ref(cmd));
     system(cmd);
