@@ -31,6 +31,7 @@ int main(int argc, char** argv) {
 
     build_exe("battery_watch");
     build_exe("dim");
+    build_exe("ff");
     build_exe("fzvim");
     build_exe("agfzf");
     build_exe("psfzf");
