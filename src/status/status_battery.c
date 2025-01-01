@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include "grv/grv.h"
 #include "grv/grv_base.h"
+#include <stdatomic.h>
 
 float readFloatFromFile(char* filename) {
     float result = 0.0f;
@@ -42,27 +43,31 @@ float getChargingCurrent(void) {
 
 enum TBatStatus { STATUS_INIT, STATUS_BAT, STATUS_CHR }; 
 
-static float averageCurrent = FLT_MAX;
+_Atomic double averageCurrent = FLT_MAX;
 static enum TBatStatus battery_status = STATUS_INIT;
 
 void* update_average_charging_current(void* user_data) {
     GRV_UNUSED(user_data);
-    const bool batteryDischarging = isBatteryDischarging();
+    while (true) {
+        const bool batteryDischarging = isBatteryDischarging();
+        double avg_current_local = atomic_load(&averageCurrent);
 
-    if ((batteryDischarging && battery_status == STATUS_CHR)
-        || (!batteryDischarging && battery_status == STATUS_BAT)) {
-        battery_status = batteryDischarging ? STATUS_BAT : STATUS_CHR;
-        averageCurrent = FLT_MAX;
-    }
+        if ((batteryDischarging && battery_status == STATUS_CHR)
+            || (!batteryDischarging && battery_status == STATUS_BAT)) {
+            battery_status = batteryDischarging ? STATUS_BAT : STATUS_CHR;
+            avg_current_local = FLT_MAX;
+        }
 
-    if (averageCurrent == FLT_MAX) {
-        averageCurrent = getChargingCurrent();
-    } else {
-        float diff = getChargingCurrent() - averageCurrent;
-        float a = 0.05;
-        averageCurrent += a * diff;
+        if (avg_current_local == FLT_MAX) {
+            avg_current_local = getChargingCurrent();
+        } else {
+            double diff = getChargingCurrent() - averageCurrent;
+            double a = 0.01;
+            avg_current_local += a * diff;
+        }
+        atomic_store(&averageCurrent, avg_current_local);
+        usleep(500000);
     }
-    usleep(500000);
     return NULL;
 }
 
@@ -72,17 +77,19 @@ void start_charging_current_thread(void) {
 }
 
 float getRemainingBatteryTime(void) {
-    return getCurrentBatteryCharge() / averageCurrent;
+    return getCurrentBatteryCharge() / atomic_load(&averageCurrent);
 }
 
 float getRemainingChargingTime(void) {
     float remainingCharge = getFullBatteryCharge() - getCurrentBatteryCharge();
-    return remainingCharge / averageCurrent;
+    return remainingCharge / atomic_load(&averageCurrent);
 }
 
 grv_str_t formatTime(float time) {
-    i32 hours = time;
-    i32 minutes = (time - hours) * 60;
+    int time_in_seconds = time * 3600.0f;
+    time_in_seconds = (time_in_seconds + 150) / 300 * 300;
+    i32 hours = time_in_seconds / 3600;
+    i32 minutes = (time_in_seconds / 60) % 60;
     return grv_str_format(grv_str_ref(" {int}:{int:02}"), hours, minutes);
 }
 
