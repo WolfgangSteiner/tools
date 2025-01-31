@@ -1,19 +1,19 @@
 #include "grv/grv.h"
 #include "grv/grv_util.h"
 
-#define SOFT_CUTOFF 22.0f
-#define HARD_CUTOFF 22.5f
+#define SOFT_CUTOFF 22.5f
+#define HARD_CUTOFF 23.25f
 
 void render_lock_image(void) {
-    char* text = "time to sleep";
+    char* text = "TIME TO SLEEP";
     char* output_image = "/tmp/sleep_watch.png";
-    int width = 2240;
-    int height = 1400;
+    int width = 1920;
+    int height = 1080;
     int font_size = 72;
     char* text_color="#888888";
     char* background_color="#222222";
     char* cmd = grv_cstr_new_with_format(
-        "convert -size %dx%d -background \"%s\" -fill \"%s\" -pointsize 144 -gravity Center label:\"%s\" %s",
+        "convert -size %dx%d -background \"%s\" -fill \"%s\" -font Souvenir -pointsize 144 -gravity Center label:\"%s\" %s",
         width, height, background_color, text_color, text, output_image);
     //grv_log_info(grv_str_ref(cmd));
     system(cmd);
@@ -24,7 +24,7 @@ f32 unlock_interval(f32 time) {
     if (time >= HARD_CUTOFF) {
         return 1.0f/60.0f;
     } else if (time >= SOFT_CUTOFF) {
-        return 5.0f/60.0f;
+        return 15.0f/60.0f;
     } else {
         return 1.0f;
     }
