@@ -25,7 +25,7 @@ for filename in os.listdir("."):
         nfn = nfn.lower() 
         nfn = re.sub(r'[ -]', '_', nfn)
         nfn = re.sub(r'__+', '_', nfn)
-        nfn = re.sub(r'[^a-z0-9_.]', '', nfn)
+        nfn = re.sub(r'[^a-zäöü0-9_.]', '', nfn)
         if filename != nfn:
             if dry_run:
                 print(f"'{filename}' -> '{nfn}'")
