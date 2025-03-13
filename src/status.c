@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     startPingThread();
     start_charging_current_thread();
 
-    printf("{\"version\":1}\n");
+    printf("{\"version\":1, \"stop_signal\": 0}\n");
     printf("[\n");
 
     while (true) {
