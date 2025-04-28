@@ -18,6 +18,7 @@ char* mupdf =
 "n, N           Find the next/previous search result.\n"
 "c              Toggle between color and grayscale rendering.\n";
 
+
 int main(int argc, char** argv) {
     if (argc == 1 || argc > 2) {
         grv_log_info(grv_str_ref("Usage: cheat <name-of-cheat>"));
@@ -33,8 +34,12 @@ int main(int argc, char** argv) {
     } else if (grv_cstr_eq(name, "pico8")) {
         urls[0] = "https://www.lexaloffle.com/media/13822/41_PICO-8%20Cheat%20Sheet%20(4k%20-%20Dark).png";
         urls[1] = "https://www.lexaloffle.com/bbs/files/13845/glyphd.png";
+	} else if (grv_cstr_eq(name, "git")) {
+	str = "git submodule update --init --recursive\n";
     } else if (grv_cstr_eq(name, "mupdf")) {
         str = mupdf;
+	} else if (grv_cstr_eq(name, "nmcli")) {
+		str = "nmcli device wifi connect <SSID> password <PASSWORD>\n";
     } else {
         urls[0] = grv_cstr_new_with_format("https://www.google.com/search?q=cheatsheet%%20%s", name);
     }
